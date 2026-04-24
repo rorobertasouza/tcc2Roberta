@@ -1,24 +1,22 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: *");
 header("Content-Type: application/json; charset=UTF-8");
 
 include "config.php";
 
-$data = json_decode(file_get_contents("php://input"), true);
-
-$response = [];
-
-if (!$data) {
-    $response = ["success" => false, "message" => "Nenhum dado recebido."];
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+// Se for uma requisição OPTIONS (preflight), apenas retorna OK
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-$nome = $data["name"] ?? "";
-$email = $data["email"] ?? "";
-$senha = $data["password"] ?? "";
+$response = [];
+
+$nome = $_POST["name"] ?? "";
+$email = $_POST["email"] ?? "";
+$senha = $_POST["password"] ?? "";
 
 if (empty($nome) || empty($email) || empty($senha)) {
     $response = ["success" => false, "message" => "Todos os campos são obrigatórios."];

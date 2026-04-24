@@ -1,70 +1,64 @@
 import React, { useState } from "react";
+import "./Auth.css";
 
-export default function Register({ onRegisterSuccess }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: ""
-  });
+export default function Register({ onBack }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleRegister = (e) => {
     e.preventDefault();
 
-    try {
-      const res = await fetch("http://localhost/find-animal-friend-react/api/register.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("email", email);
+    formData.append("password", password);
 
-      const data = await res.json();
-
-      if (data.success) {
-        alert("Cadastro realizado com sucesso!");
-        onRegisterSuccess(); // volta para tela de login
-      } else {
-        alert("Erro no cadastro: " + data.message);
-      }
-    } catch (err) {
-      console.error("Erro:", err);
-      alert("Erro de conexão com servidor.");
-    }
+    fetch("http://localhost/find-animal-friend-react/api/register.php", {
+      method: "POST",
+      body: formData
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Cadastro realizado com sucesso!");
+          onBack(); // volta para login
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(err => console.error("Erro:", err));
   };
 
   return (
     <div className="auth-container">
-      <h2>Cadastro</h2>
-      <form onSubmit={handleSubmit}>
+      <h1 className="app-title">Cadastro</h1>
+
+      <form className="auth-form" onSubmit={handleRegister}>
         <input
           type="text"
-          name="name"
           placeholder="Nome"
-          value={formData.name}
-          onChange={handleChange}
-          required
+          value={name}
+          onChange={e => setName(e.target.value)}
         />
         <input
           type="email"
-          name="email"
-          placeholder="E-mail"
-          value={formData.email}
-          onChange={handleChange}
-          required
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
         />
         <input
           type="password"
-          name="password"
           placeholder="Senha"
-          value={formData.password}
-          onChange={handleChange}
-          required
+          value={password}
+          onChange={e => setPassword(e.target.value)}
         />
         <button type="submit">Cadastrar</button>
       </form>
+
+      <div className="signup-link" onClick={onBack}>
+        Já tem conta? Entrar
+      </div>
     </div>
   );
 }

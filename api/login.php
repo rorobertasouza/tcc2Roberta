@@ -1,35 +1,47 @@
 <?php
-
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: *");
+header("Content-Type: application/json; charset=UTF-8");
 
 include "config.php";
 
-// 🔥 pegar dados simples (SEM JSON, SEM complicação)
-$email = $_POST['email'] ?? null;
-$password = $_POST['password'] ?? null;
-
-if (!$email || !$password) {
-    echo json_encode([
-        "success" => false,
-        "error" => "Dados não enviados"
-    ]);
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-// consulta
-$sql = "SELECT * FROM users WHERE email='$email'";
-$result = $conn->query($sql);
+$email = $_POST["email"] ?? "";
+$senha = $_POST["password"] ?? "";
 
-if ($result && $result->num_rows > 0) {
+$response = [];
+
+if (empty($email) || empty($senha)) {
+    $response = ["success" => false, "message" => "Email e senha são obrigatórios."];
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+$sql = "SELECT * FROM users WHERE email = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
     $user = $result->fetch_assoc();
 
-    // 🔥 comparação simples (pra funcionar AGORA)
-    if ($password === $user['senha']) {
-        echo json_encode(["success" => true]);
+    if (password_verify($senha, $user["senha"])) {
+        $response = ["success" => true, "message" => "Login realizado com sucesso!"];
     } else {
-        echo json_encode(["success" => false]);
+        $response = ["success" => false, "message" => "Senha incorreta."];
     }
 } else {
-    echo json_encode(["success" => false]);
+    $response = ["success" => false, "message" => "Usuário não encontrado."];
 }
+
+echo json_encode($response, JSON_UNESCAPED_UNICODE);
+
+$stmt->close();
+$conn->close();
+?>
