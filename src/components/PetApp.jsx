@@ -13,36 +13,23 @@ export default function PetApp() {
       .catch(err => console.error("Erro:", err));
   }, []);
 
-  const handleLike = () => {
-    setLikedPet(pets[currentIndex]);
-  };
-
-  const handleDislike = () => {
-    setCurrentIndex(prev => prev + 1);
-  };
-
+  const handleLike = () => setLikedPet(pets[currentIndex]);
+  const handleDislike = () => setCurrentIndex(prev => prev + 1);
   const closeDetails = () => {
     setLikedPet(null);
     setCurrentIndex(prev => prev + 1);
   };
 
-  if (!pets || pets.length === 0) {
-    return <h2>Carregando pets...</h2>;
-  }
-
+  if (!pets || pets.length === 0) return <h2>Carregando pets...</h2>;
   const pet = pets[currentIndex];
   if (!pet) return <h2>Não há mais pets</h2>;
 
   return (
-    <div className="pet-container">
-      <h2 className="app-title">Find Friend Animal</h2>
-
-      <div className="pet-card">
-        <img className="pet-image" src={pet.image} alt={pet.name} />
-        <div className="pet-info">
-          <h3>{pet.name}</h3>
-          <p>{pet.description}</p>
-        </div>
+    <div className="pet-card">
+      <img className="pet-image" src={pet.image} alt={pet.name} />
+      <div className="pet-info">
+        <h3>{pet.name}</h3>
+        <p>{pet.description}</p>
       </div>
 
       <div className="actions">
@@ -56,7 +43,7 @@ export default function PetApp() {
             <img src={likedPet.image} alt={likedPet.name} className="modal-image" />
             <h2 className="modal-title">{likedPet.name}</h2>
             <p className="modal-description">{likedPet.description}</p>
-
+            {/* detalhes */}
             <ul className="pet-details-list">
               <li>📅 <strong>Idade:</strong> {likedPet.age} anos</li>
               <li>🐾 <strong>Raça:</strong> {likedPet.breed}</li>
@@ -67,15 +54,17 @@ export default function PetApp() {
               <li>✂️ <strong>Castrado:</strong> {likedPet.neutered}</li>
               <li>📧 <strong>Contato:</strong> {likedPet.contact}</li>
             </ul>
-
             <div className="modal-actions">
-              <a
-  href={`mailto:${likedPet.contact}?subject=Interesse em adotar ${likedPet.name}&body=Olá, tenho interesse em adotar ${likedPet.name}.`}
+         <a
+  href={`https://wa.me/5551980549794?text=${encodeURIComponent(
+    `Olá, tenho interesse em adotar ${likedPet.name}!`
+  )}`}
+  target="_blank"
+  rel="noopener noreferrer"
   className="adopt-btn"
 >
   Quero Adotar 🐶
 </a>
-
               <button className="close-btn" onClick={closeDetails}>Fechar</button>
             </div>
           </div>

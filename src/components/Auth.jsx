@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Register from "./Register";
-import "./Auth.css"; // importa o CSS estilizado
+import "./Auth.css";
 
 export default function Auth({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,30 +12,37 @@ export default function Auth({ onLoginSuccess }) {
 
     const formData = new FormData();
     formData.append("email", email);
-    formData.append("password", password);
+    formData.append("senha", password); // <-- corrigido
 
-    fetch("http://localhost/find-animal-friend-react/api/login.php", {
-      method: "POST",
-      body: formData
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          onLoginSuccess();
-        } else {
-          alert("Login inválido");
+   fetch("http://localhost/find-animal-friend-react/api/login.php", {
+  method: "POST",
+  body: formData,
+  credentials: "include"
+})
+      .then(res => res.text())
+      .then(text => {
+        console.log("Resposta bruta do PHP:", text);
+        try {
+          const data = JSON.parse(text);
+          if (data.success) {
+            alert(data.message);
+            onLoginSuccess();
+          } else {
+            alert(data.message || "Login inválido");
+          }
+        } catch (err) {
+          console.error("Erro ao parsear JSON:", err);
+          alert("Erro inesperado na resposta do servidor.");
         }
       })
-      .catch(err => console.error("Erro:", err));
+      .catch(err => console.error("Erro na requisição:", err));
   };
 
-  // Se não está em login, mostra o componente de cadastro
   if (!isLogin) return <Register onBack={() => setIsLogin(true)} />;
 
   return (
     <div className="auth-container">
       <h1 className="app-title">Find Friend Animal</h1>
-
       <form className="auth-form" onSubmit={handleLogin}>
         <input
           type="email"
@@ -51,7 +58,6 @@ export default function Auth({ onLoginSuccess }) {
         />
         <button type="submit">Entrar</button>
       </form>
-
       <div className="signup-link" onClick={() => setIsLogin(false)}>
         Criar conta
       </div>

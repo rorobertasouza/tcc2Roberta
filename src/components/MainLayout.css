@@ -1,0 +1,42 @@
+.app-container {
+display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #ff6b6b, #f8e473);
+}
+
+.navbar {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.navbar button {
+  background: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.navbar button.active {
+  background: #ff6600;
+  color: white;
+  font-weight: bold;
+}
+
+.app-title {
+  margin: 1rem 0;
+  font-size: 2rem;
+  color: #333;
+}
+
+.content {
+  width: 100%;
+  max-width: 600px;
+  margin: 2rem auto;
+  display: flex;
+  justify-content: center;
+}

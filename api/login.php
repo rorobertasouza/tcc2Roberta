@@ -1,47 +1,44 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: *");
+session_start();
 header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST");
 
-include "config.php";
+$host = "localhost";
+$user = "root";
+$pass = "";
+$dbname = "adocao";
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+$conn = new mysqli($host, $user, $pass, $dbname);
+
+if ($conn->connect_error) {
+    echo json_encode(["success" => false, "message" => "Erro na conexão"]);
     exit;
 }
 
 $email = $_POST["email"] ?? "";
-$senha = $_POST["password"] ?? "";
-
-$response = [];
+$senha = $_POST["senha"] ?? "";
 
 if (empty($email) || empty($senha)) {
-    $response = ["success" => false, "message" => "Email e senha são obrigatórios."];
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    echo json_encode(["success" => false, "message" => "Email ou senha não enviados"]);
     exit;
 }
 
-$sql = "SELECT * FROM users WHERE email = ?";
+$sql = "SELECT id, nome, email, senha FROM users WHERE email = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($result->num_rows > 0) {
-    $user = $result->fetch_assoc();
-
-    if (password_verify($senha, $user["senha"])) {
-        $response = ["success" => true, "message" => "Login realizado com sucesso!"];
+if ($row = $result->fetch_assoc()) {
+    // Verifica se a senha é hash ou texto simples
+    if (password_verify($senha, $row["senha"]) || $row["senha"] === $senha) {
+        $_SESSION["user_id"] = $row["id"];
+        echo json_encode(["success" => true, "message" => "Login realizado com sucesso"]);
     } else {
-        $response = ["success" => false, "message" => "Senha incorreta."];
+        echo json_encode(["success" => false, "message" => "Senha incorreta"]);
     }
 } else {
-    $response = ["success" => false, "message" => "Usuário não encontrado."];
+    echo json_encode(["success" => false, "message" => "Usuário não encontrado"]);
 }
-
-echo json_encode($response, JSON_UNESCAPED_UNICODE);
-
-$stmt->close();
-$conn->close();
-?>
