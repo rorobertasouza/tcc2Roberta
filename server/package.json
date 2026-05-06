@@ -1,0 +1,13 @@
+{
+  "name": "ws-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.22.3",
+    "node-fetch": "^2.6.7",
+    "ws": "^8.20.0"
+  }
+}

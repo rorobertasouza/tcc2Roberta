@@ -1,72 +1,42 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import useWebSocket from "../hooks/useWebSocket";
+import PetCard from "./PetCard";
 import "./PetApp.css";
 
 export default function PetApp() {
-  const [pets, setPets] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [likedPet, setLikedPet] = useState(null);
+  const pets = useWebSocket();
+  const [index, setIndex] = useState(0);
+  const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    fetch("http://localhost/find-animal-friend-react/api/pets.php")
-      .then(res => res.json())
-      .then(data => setPets(data))
-      .catch(err => console.error("Erro:", err));
-  }, []);
+  if (pets.length === 0) {
+    return <p>Nenhum pet disponível no momento.</p>;
+  }
 
-  const handleLike = () => setLikedPet(pets[currentIndex]);
-  const handleDislike = () => setCurrentIndex(prev => prev + 1);
-  const closeDetails = () => {
-    setLikedPet(null);
-    setCurrentIndex(prev => prev + 1);
-  };
+  const petAtual = pets[index];
 
-  if (!pets || pets.length === 0) return <h2>Carregando pets...</h2>;
-  const pet = pets[currentIndex];
-  if (!pet) return <h2>Não há mais pets</h2>;
+  const handleLike = () => setShowModal(true);
+  const handleDislike = () => setIndex((prev) => (prev + 1) % pets.length);
 
   return (
-    <div className="pet-card">
-      <img className="pet-image" src={pet.image} alt={pet.name} />
-      <div className="pet-info">
-        <h3>{pet.name}</h3>
-        <p>{pet.description}</p>
+    <div className="tinder-container">
+      <div className="tinder-card">
+        <PetCard pet={petAtual} />
       </div>
 
-      <div className="actions">
+      <div className="tinder-actions">
         <button className="dislike" onClick={handleDislike}>👎</button>
-        <button className="like" onClick={handleLike}>❤️</button>
+        <button className="like" onClick={handleLike}>👍</button>
       </div>
 
-      {likedPet && (
-        <div className="modal">
+      {showModal && (
+        <div className="modal-overlay">
           <div className="modal-content">
-            <img src={likedPet.image} alt={likedPet.name} className="modal-image" />
-            <h2 className="modal-title">{likedPet.name}</h2>
-            <p className="modal-description">{likedPet.description}</p>
-            {/* detalhes */}
-            <ul className="pet-details-list">
-              <li>📅 <strong>Idade:</strong> {likedPet.age} anos</li>
-              <li>🐾 <strong>Raça:</strong> {likedPet.breed}</li>
-              <li>📏 <strong>Porte:</strong> {likedPet.size}</li>
-              <li>⚧ <strong>Sexo:</strong> {likedPet.gender}</li>
-              <li>📍 <strong>Localização:</strong> {likedPet.location}</li>
-              <li>💉 <strong>Vacinado:</strong> {likedPet.vaccinated}</li>
-              <li>✂️ <strong>Castrado:</strong> {likedPet.neutered}</li>
-              <li>📧 <strong>Contato:</strong> {likedPet.contact}</li>
-            </ul>
-            <div className="modal-actions">
-         <a
-  href={`https://wa.me/5551980549794?text=${encodeURIComponent(
-    `Olá, tenho interesse em adotar ${likedPet.name}!`
-  )}`}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="adopt-btn"
->
-  Quero Adotar 🐶
-</a>
-              <button className="close-btn" onClick={closeDetails}>Fechar</button>
-            </div>
+            <h3>{petAtual.name}</h3>
+            <p>{petAtual.breed}</p>
+            <p>{petAtual.age ? petAtual.age + " anos" : "idade não informada"}</p>
+            <p>{petAtual.description}</p>
+            <button className="adopt-btn">Quero Adotar</button>
+            <button className="close-btn" onClick={() => setShowModal(false)}>Fechar</button>
           </div>
         </div>
       )}

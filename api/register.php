@@ -1,39 +1,73 @@
 <?php
-session_start();
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: *");
+header("Content-Type: application/json");
 
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "adocao";
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
+}
 
-$conn = new mysqli($host, $user, $pass, $dbname);
+$conn = new mysqli("localhost", "root", "", "adocao");
 
 if ($conn->connect_error) {
-    echo json_encode(["success" => false, "message" => "Erro na conexão"]);
+    echo json_encode(["success" => false, "message" => "Erro banco"]);
     exit;
 }
 
-$email = $_POST["email"] ?? "";
-$senha = $_POST["senha"] ?? "";
+$name = $_POST['name'] ?? '';
+$email = $_POST['email'] ?? '';
+$password = $_POST['password'] ?? '';
 
-if (empty($email) || empty($senha)) {
-    echo json_encode(["success" => false, "message" => "Email e senha são obrigatórios"]);
+$residencia = $_POST['residencia'] ?? '';
+$espaco = $_POST['espaco'] ?? '';
+$tempo = $_POST['tempo'] ?? '';
+$experiencia = $_POST['experiencia'] ?? '';
+$preferencia_especie = $_POST['preferencia_especie'] ?? '';
+$preferencia_porte = $_POST['preferencia_porte'] ?? '';
+$preferencia_idade = $_POST['preferencia_idade'] ?? '';
+$preferencia_sexo = $_POST['preferencia_sexo'] ?? '';
+$aceita_especial = $_POST['aceita_especial'] ?? '';
+
+if (!$email || !$password) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Email e senha são obrigatórios"
+    ]);
     exit;
 }
 
-// Cria hash seguro da senha
-$senhaHash = password_hash($senha, PASSWORD_DEFAULT);
+// 🔒 Criptografa a senha
+$senhaHash = password_hash($password, PASSWORD_DEFAULT);
 
-$sql = "INSERT INTO users (email, senha) VALUES (?, ?)";
+$sql = "INSERT INTO users 
+(nome, email, senha, residencia, espaco, tempo, experiencia, preferencia_especie, preferencia_porte, preferencia_idade, preferencia_sexo, aceita_especial) 
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $email, $senhaHash);
+$stmt->bind_param(
+    "ssssssssssss",
+    $name,
+    $email,
+    $senhaHash,
+    $residencia,
+    $espaco,
+    $tempo,
+    $experiencia,
+    $preferencia_especie,
+    $preferencia_porte,
+    $preferencia_idade,
+    $preferencia_sexo,
+    $aceita_especial
+);
 
 if ($stmt->execute()) {
-    echo json_encode(["success" => true, "message" => "Usuário cadastrado com sucesso"]);
+    echo json_encode(["success" => true]);
 } else {
-    echo json_encode(["success" => false, "message" => "Erro ao cadastrar usuário"]);
+    echo json_encode([
+        "success" => false,
+        "message" => "Erro ao cadastrar",
+        "erro_sql" => $conn->error
+    ]);
 }
+?>

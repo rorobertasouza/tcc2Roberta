@@ -2,10 +2,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background: linear-gradient(135deg, #ff6b6b, #f8e473);
+  justify-content: center;   /* centraliza verticalmente */
+  height: 100vh;             /* ocupa toda a altura da tela */
+  width: 100vw;              /* ocupa toda a largura da tela */
+  background: linear-gradient(135deg, #ff6b6b, #f8e473); /* igual ao login */
+  margin: 0;                 /* remove margens externas */
+  padding: 0;                /* remove padding externo */
 }
+
 
 .app-title {
   font-size: 2.8em;
