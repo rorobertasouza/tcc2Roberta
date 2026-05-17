@@ -1,6 +1,5 @@
 <?php
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: *");
+require_once __DIR__ . '/cors.php';
 
 $conn = new mysqli("localhost", "root", "", "adocao");
 if ($conn->connect_error) {

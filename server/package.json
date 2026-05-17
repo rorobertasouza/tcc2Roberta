@@ -1,9 +1,9 @@
 {
   "name": "ws-server",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "ws-server.js",
   "scripts": {
-    "dev": "node server.js"
+    "dev": "node ws-server.js"
   },
   "dependencies": {
     "mysql2": "^3.22.3",

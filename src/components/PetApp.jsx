@@ -1,24 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import SwipeCard from "./SwipeCard";
 import MatchScreen from "./MatchScreen";
+import useWebSocket from "../hooks/useWebSocket";
 import "./PetApp.css";
 import "./SwipeCard.css";
 
 const API_BASE = "http://localhost/find-animal-friend-react/api";
 
 export default function PetApp() {
-  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const userId = storedUser.id;
+  const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+  const userId = storedUser?.id;
+  const wsPets = useWebSocket(userId);
 
   const [pets, setPets] = useState([]);
   const [index, setIndex] = useState(0);
   const [matchData, setMatchData] = useState(null); // { pet, whatsappUrl }
   const [loading, setLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
 
-  // Buscar pets filtrados por preferências do usuário
   useEffect(() => {
+    if (wsPets.length > 0) {
+      setPets(wsPets);
+      setLoading(false);
+      setHasFetched(true);
+    }
+  }, [wsPets]);
+
+  useEffect(() => {
+    if (hasFetched) return;
     fetchPets();
-  }, []);
+  }, [hasFetched]);
 
   const fetchPets = () => {
     setLoading(true);
@@ -36,10 +47,12 @@ export default function PetApp() {
           setPets(data);
         }
         setLoading(false);
+        setHasFetched(true);
       })
       .catch((err) => {
         console.error("Erro ao buscar pets:", err);
         setLoading(false);
+        setHasFetched(true);
       });
   };
 
