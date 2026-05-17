@@ -1,0 +1,269 @@
+/* ========== SwipeCard — Tinder Style ========== */
+
+.swipe-wrapper {
+  position: relative;
+  width: min(340px, calc(100vw - 40px));
+  height: min(520px, calc(100dvh - 210px));
+  perspective: 1000px;
+  flex-shrink: 0;
+}
+
+.swipe-card {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition: box-shadow 0.3s ease;
+  will-change: transform;
+}
+
+.swipe-card:active { cursor: grabbing; }
+
+.swipe-card:hover {
+  box-shadow: 0 16px 48px rgba(0,0,0,.18);
+}
+
+/* ── Overlays ── */
+.swipe-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  border-radius: var(--radius-lg);
+}
+
+.swipe-overlay.like-overlay {
+  background: linear-gradient(135deg, rgba(76,175,80,.65), rgba(129,199,132,.45));
+}
+
+.swipe-overlay.dislike-overlay {
+  background: linear-gradient(135deg, rgba(254,60,114,.65), rgba(255,96,54,.45));
+}
+
+.swipe-overlay .overlay-icon {
+  font-size: 76px;
+  text-shadow: 0 4px 15px rgba(0,0,0,.25);
+  transform: rotate(-15deg);
+  animation: pulseIcon 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulseIcon {
+  from { transform: rotate(-15deg) scale(1); }
+  to   { transform: rotate(-15deg) scale(1.1); }
+}
+
+/* ── Pet image ── */
+.swipe-card .pet-image-container {
+  position: relative;
+  width: 100%;
+  height: 62%;
+  overflow: hidden;
+}
+
+.swipe-card .pet-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.swipe-card:hover .pet-image { transform: scale(1.03); }
+
+/* ── Compatibility badge ── */
+.compatibility-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--brand-gradient);
+  color: white;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-pink);
+  z-index: 5;
+  backdrop-filter: blur(10px);
+}
+
+.compatibility-badge.high {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0d3321;
+  box-shadow: 0 3px 12px rgba(67,233,123,.5);
+}
+
+.compatibility-badge.medium {
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  color: #4a3520;
+  box-shadow: 0 3px 12px rgba(246,211,101,.5);
+}
+
+/* ── Pet info ── */
+.swipe-card .pet-info {
+  padding: 16px 18px;
+  background: var(--surface);
+}
+
+.swipe-card .pet-name {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
+}
+
+.swipe-card .pet-breed {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.swipe-card .pet-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.swipe-card .pet-tag {
+  background: #fff0f3;
+  color: var(--brand-primary);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(254,60,114,.15);
+  transition: all 0.2s ease;
+}
+
+.swipe-card .pet-tag:hover {
+  background: rgba(254,60,114,.08);
+  transform: translateY(-1px);
+}
+
+/* ── Exit animations ── */
+.swipe-card.swipe-right { animation: swipeRight 0.5s ease forwards; }
+.swipe-card.swipe-left  { animation: swipeLeft  0.5s ease forwards; }
+
+@keyframes swipeRight {
+  0%   { transform: translateX(0) rotate(0); opacity: 1; }
+  100% { transform: translateX(160%) rotate(28deg); opacity: 0; }
+}
+
+@keyframes swipeLeft {
+  0%   { transform: translateX(0) rotate(0); opacity: 1; }
+  100% { transform: translateX(-160%) rotate(-28deg); opacity: 0; }
+}
+
+/* ── No more pets ── */
+.no-more-pets {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(340px, calc(100vw - 40px));
+  padding: 48px 32px;
+  background: var(--surface-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  gap: 12px;
+}
+
+.no-more-pets .empty-icon {
+  font-size: 60px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+.no-more-pets h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.no-more-pets p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Action buttons ── */
+.action-buttons {
+  display: flex;
+  gap: 28px;
+  margin-top: 22px;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn {
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s var(--easing);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.2);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.3s ease;
+}
+
+.action-btn:active::after { transform: scale(1); }
+
+.action-btn.dislike-btn {
+  width: 58px;
+  height: 58px;
+  background: white;
+  border: 2px solid #f0f2f5;
+  box-shadow: var(--shadow-md);
+  font-size: 24px;
+  color: var(--text-muted);
+}
+
+.action-btn.like-btn {
+  width: 70px;
+  height: 70px;
+  background: var(--brand-gradient);
+  box-shadow: var(--shadow-pink);
+  font-size: 28px;
+}
+
+.action-btn:hover { transform: scale(1.1); }
+.action-btn:active { transform: scale(0.95); }
+
+.action-btn.dislike-btn:hover {
+  border-color: var(--brand-secondary);
+  color: var(--brand-secondary);
+  box-shadow: 0 6px 20px rgba(255,96,54,.25);
+}
+
+.action-btn.like-btn:hover {
+  box-shadow: 0 10px 32px rgba(254,60,114,.5);
+}

@@ -1,5 +1,8 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+session_start(); // precisa iniciar a sessão
+
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
@@ -23,22 +26,22 @@ $result = $stmt->get_result();
 if ($result && $result->num_rows > 0) {
     $user = $result->fetch_assoc();
 
-    // 🔒 Verifica a senha criptografada
     if (password_verify($password, $user['senha'])) {
+        // 🔑 Criar sessão
+        $_SESSION["user_id"] = $user["id"];
+
         echo json_encode([
             "success" => true,
-            "user" => $user
+            "message" => "Login realizado com sucesso",
+            "user" => [
+                "id" => $user["id"],
+                "nome" => $user["nome"],
+                "email" => $user["email"]
+            ]
         ]);
     } else {
-        echo json_encode([
-            "success" => false,
-            "message" => "Senha incorreta"
-        ]);
+        echo json_encode(["success" => false, "message" => "Senha incorreta"]);
     }
 } else {
-    echo json_encode([
-        "success" => false,
-        "message" => "Usuário não encontrado"
-    ]);
+    echo json_encode(["success" => false, "message" => "Usuário não encontrado"]);
 }
-?>

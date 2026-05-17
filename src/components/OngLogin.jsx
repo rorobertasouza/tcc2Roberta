@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
-export default function OngRegister() {
-  const navigate = useNavigate();
-  const [form, setForm]     = useState({ nome: "", email: "", senha: "", contato: "" });
+export default function OngLogin() {
+  const [form, setForm]     = useState({ email: "", senha: "" });
   const [loading, setLoading] = useState(false);
   const [erro, setErro]     = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -16,16 +16,17 @@ export default function OngRegister() {
     setLoading(true);
     setErro("");
     try {
-      const res  = await fetch("http://localhost/find-animal-friend-react/api/ongregister.php", {
+      const res  = await fetch("http://localhost/find-animal-friend-react/api/onglogin.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
       const data = await res.json();
       if (data.success) {
-        navigate("/ong-login");
+        localStorage.setItem("ong", JSON.stringify(data.ong));
+        navigate("/dashboard");
       } else {
-        setErro(data.message || "Erro ao cadastrar.");
+        setErro(data.message || "Email ou senha inválidos.");
       }
     } catch {
       setErro("Erro de conexão com o servidor.");
@@ -35,12 +36,12 @@ export default function OngRegister() {
   };
 
   return (
-    <div className="auth-screen" style={{ paddingTop: "32px", paddingBottom: "32px" }}>
+    <div className="auth-screen">
       <h1 className="auth-logo">🐾 Find Animal Friend</h1>
-      <p className="auth-tagline">Cadastre sua ONG e comece a conectar pets a famílias</p>
+      <p className="auth-tagline">Painel exclusivo para ONGs</p>
 
       <div className="auth-card">
-        <h2>Cadastro de ONG</h2>
+        <h2>Login da ONG</h2>
 
         {erro && (
           <div style={{
@@ -55,23 +56,11 @@ export default function OngRegister() {
 
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
-            <label htmlFor="ong-nome">Nome da ONG</label>
+            <label htmlFor="ong-email">Email</label>
             <input
-              id="ong-nome"
-              name="nome"
-              value={form.nome}
-              placeholder="Ex: Patinhas Felizes"
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="auth-field">
-            <label htmlFor="ong-reg-email">Email</label>
-            <input
-              id="ong-reg-email"
-              name="email"
+              id="ong-email"
               type="email"
+              name="email"
               value={form.email}
               placeholder="contato@ong.org"
               onChange={handleChange}
@@ -80,40 +69,28 @@ export default function OngRegister() {
           </div>
 
           <div className="auth-field">
-            <label htmlFor="ong-reg-senha">Senha</label>
+            <label htmlFor="ong-senha">Senha</label>
             <input
-              id="ong-reg-senha"
-              name="senha"
+              id="ong-senha"
               type="password"
+              name="senha"
               value={form.senha}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="••••••••"
               onChange={handleChange}
               required
-              minLength={6}
-            />
-          </div>
-
-          <div className="auth-field">
-            <label htmlFor="ong-contato">Telefone / WhatsApp</label>
-            <input
-              id="ong-contato"
-              name="contato"
-              value={form.contato}
-              placeholder="Ex: 11999998888"
-              onChange={handleChange}
             />
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Cadastrando..." : "Cadastrar ONG"}
+            {loading ? "Entrando..." : "Entrar no Painel"}
           </button>
         </form>
       </div>
 
       <div className="auth-footer" style={{ marginTop: "16px" }}>
-        <span>Já tem conta? </span>
-        <Link to="/ong-login" style={{ color: "white", fontWeight: 700 }}>
-          Fazer login
+        <span>Ainda sem conta? </span>
+        <Link to="/ong-register" style={{ color: "white", fontWeight: 700 }}>
+          Cadastrar ONG
         </Link>
       </div>
 

@@ -4,6 +4,9 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+
 
 $host = "localhost";
 $user = "root";
@@ -17,12 +20,15 @@ if ($conn->connect_error) {
     exit;
 }
 
-if (!isset($_SESSION["user_id"])) {
+// Aceitar user_id da sessão OU do parâmetro (fallback para CORS)
+$user_id = $_SESSION["user_id"] ?? ($_GET["user_id"] ?? ($_POST["user_id"] ?? null));
+
+if (!$user_id) {
     echo json_encode(["success" => false, "message" => "Usuário não autenticado"]);
     exit;
 }
 
-$user_id = $_SESSION["user_id"];
+$user_id = intval($user_id);
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
     $sql = "SELECT nome, email, residencia, espaco, tempo, experiencia,

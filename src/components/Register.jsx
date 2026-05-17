@@ -1,82 +1,192 @@
 import React, { useState } from "react";
+import "../styles.css";
 
 export default function Register({ onBack }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({
+    name: "", email: "", password: "",
+    residencia: "", espaco: "", tempo: "", experiencia: "",
+    preferencia_especie: "", preferencia_porte: "",
+    preferencia_idade: "", preferencia_sexo: "", aceita_especial: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Novos estados
-  const [residencia, setResidencia] = useState("");
-  const [espaco, setEspaco] = useState("");
-  const [tempo, setTempo] = useState("");
-  const [experiencia, setExperiencia] = useState("");
-  const [preferenciaEspecie, setPreferenciaEspecie] = useState("");
-  const [preferenciaPorte, setPreferenciaPorte] = useState("");
-  const [preferenciaIdade, setPreferenciaIdade] = useState("");
-  const [preferenciaSexo, setPreferenciaSexo] = useState("");
-  const [aceitaEspecial, setAceitaEspecial] = useState("");
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleRegister = (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
     const formData = new FormData();
-    formData.append("name", name);
-    formData.append("email", email);
-    formData.append("password", password);
-    formData.append("residencia", residencia);
-    formData.append("espaco", espaco);
-    formData.append("tempo", tempo);
-    formData.append("experiencia", experiencia);
-    formData.append("preferencia_especie", preferenciaEspecie);
-    formData.append("preferencia_porte", preferenciaPorte);
-    formData.append("preferencia_idade", preferenciaIdade);
-    formData.append("preferencia_sexo", preferenciaSexo);
-    formData.append("aceita_especial", aceitaEspecial);
+    Object.entries(form).forEach(([k, v]) => formData.append(k, v));
 
     fetch("http://localhost/find-animal-friend-react/api/register.php", {
       method: "POST",
-      body: formData
+      body: formData,
     })
-      .then(res => res.text())
-      .then(text => {
-        try {
-          const data = JSON.parse(text);
-          if (data.success) {
-            alert("Cadastro realizado com sucesso!");
-            onBack();
-          } else {
-            alert(data.message || "Erro ao cadastrar.");
-          }
-        } catch (err) {
-          alert("Erro inesperado na resposta do servidor.");
+      .then((res) => res.text())
+      .then((text) => {
+        const data = JSON.parse(text);
+        if (data.success) {
+          onBack();
+        } else {
+          setError(data.message || "Erro ao cadastrar.");
         }
       })
-      .catch(err => console.error("Erro na requisição:", err));
+      .catch(() => setError("Erro de conexão."))
+      .finally(() => setLoading(false));
   };
 
+  const Field = ({ name, label, type = "text", placeholder }) => (
+    <div className="auth-field">
+      <label htmlFor={name}>{label}</label>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        value={form[name]}
+        onChange={handleChange}
+      />
+    </div>
+  );
+
+  const Select = ({ name, label, children }) => (
+    <div className="auth-field">
+      <label htmlFor={name}>{label}</label>
+      <select
+        id={name}
+        name={name}
+        value={form[name]}
+        onChange={handleChange}
+        style={{
+          width: "100%", padding: "13px 16px",
+          border: "2px solid var(--border)", borderRadius: "var(--radius-md)",
+          fontSize: "0.95rem", fontFamily: "inherit", outline: "none",
+          background: "var(--surface-soft)", color: "var(--text-primary)",
+          appearance: "none",
+        }}
+      >
+        {children}
+      </select>
+    </div>
+  );
+
   return (
-    <div className="auth-container">
-      <h1 className="app-title">Cadastro</h1>
-      <form className="auth-form" onSubmit={handleRegister}>
-        <input type="text" placeholder="Nome" value={name} onChange={e => setName(e.target.value)} />
-        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-        <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} />
+    <div className="auth-screen" style={{ paddingTop: "40px", paddingBottom: "40px" }}>
+      <h1 className="auth-logo">🐾 Criar Conta</h1>
+      <p className="auth-tagline">Preencha seu perfil para encontrar o pet ideal</p>
 
-        {/* Novos campos */}
-        <input type="text" placeholder="Tipo de residência" value={residencia} onChange={e => setResidencia(e.target.value)} />
-        <input type="text" placeholder="Espaço disponível" value={espaco} onChange={e => setEspaco(e.target.value)} />
-        <input type="text" placeholder="Tempo disponível para o pet" value={tempo} onChange={e => setTempo(e.target.value)} />
-        <input type="text" placeholder="Experiência prévia com animais" value={experiencia} onChange={e => setExperiencia(e.target.value)} />
-        <input type="text" placeholder="Espécie desejada" value={preferenciaEspecie} onChange={e => setPreferenciaEspecie(e.target.value)} />
-        <input type="text" placeholder="Porte preferido" value={preferenciaPorte} onChange={e => setPreferenciaPorte(e.target.value)} />
-        <input type="text" placeholder="Faixa etária desejada" value={preferenciaIdade} onChange={e => setPreferenciaIdade(e.target.value)} />
-        <input type="text" placeholder="Sexo preferido" value={preferenciaSexo} onChange={e => setPreferenciaSexo(e.target.value)} />
-        <input type="text" placeholder="Aceita necessidades especiais (sim/não)" value={aceitaEspecial} onChange={e => setAceitaEspecial(e.target.value)} />
+      <div className="auth-card" style={{ maxWidth: "420px", overflowY: "auto", maxHeight: "80vh" }}>
+        <h2>Cadastro</h2>
 
-        <button type="submit">Cadastrar</button>
-      </form>
-      <div className="signup-link" onClick={onBack}>
-        Voltar para login
+        {error && (
+          <div style={{
+            background: "#fff0f3", border: "1px solid rgba(254,60,114,.3)",
+            borderRadius: "10px", padding: "10px 14px",
+            color: "var(--brand-primary)", fontSize: "0.88rem",
+            fontWeight: 600, marginBottom: "14px",
+          }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleRegister}>
+          <Field name="name"     label="Nome completo"  placeholder="Seu nome" />
+          <Field name="email"    label="Email"           type="email" placeholder="seu@email.com" />
+          <Field name="password" label="Senha"           type="password" placeholder="••••••••" />
+
+          <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "16px 0" }} />
+          <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "12px" }}>
+            🏠 Seu estilo de vida
+          </p>
+
+          <Select name="residencia" label="Tipo de residência">
+            <option value="">Selecione...</option>
+            <option value="Casa">Casa</option>
+            <option value="Apartamento">Apartamento</option>
+            <option value="Sítio/Chácara">Sítio/Chácara</option>
+            <option value="Outro">Outro</option>
+          </Select>
+
+          <Select name="espaco" label="Espaço disponível">
+            <option value="">Selecione...</option>
+            <option value="Pequeno">Pequeno</option>
+            <option value="Médio">Médio</option>
+            <option value="Grande">Grande</option>
+            <option value="Com quintal">Com quintal</option>
+          </Select>
+
+          <Select name="tempo" label="Tempo livre para o pet">
+            <option value="">Selecione...</option>
+            <option value="Pouco">Pouco (trabalho o dia todo)</option>
+            <option value="Moderado">Moderado (meio período fora)</option>
+            <option value="Bastante">Bastante (home office)</option>
+            <option value="Integral">Integral (estou sempre em casa)</option>
+          </Select>
+
+          <Select name="experiencia" label="Experiência com pets">
+            <option value="">Selecione...</option>
+            <option value="Nenhuma">Nenhuma (primeiro pet)</option>
+            <option value="Pouca">Pouca</option>
+            <option value="Moderada">Moderada</option>
+            <option value="Muita">Muita</option>
+          </Select>
+
+          <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "16px 0" }} />
+          <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "12px" }}>
+            🐾 Preferências de pet
+          </p>
+
+          <Select name="preferencia_especie" label="Espécie preferida">
+            <option value="">Qualquer</option>
+            <option value="Vira-lata">Vira-lata</option>
+            <option value="Labrador">Labrador</option>
+            <option value="Poodle">Poodle</option>
+            <option value="Golden Retriever">Golden Retriever</option>
+            <option value="Gato">Gato</option>
+            <option value="Gato Vira-lata">Gato Vira-lata</option>
+          </Select>
+
+          <Select name="preferencia_porte" label="Porte preferido">
+            <option value="">Qualquer</option>
+            <option value="P">Pequeno (P)</option>
+            <option value="M">Médio (M)</option>
+            <option value="G">Grande (G)</option>
+          </Select>
+
+          <Select name="preferencia_idade" label="Faixa etária">
+            <option value="">Qualquer</option>
+            <option value="Filhote">Filhote (0–1 ano)</option>
+            <option value="Jovem">Jovem (1–3 anos)</option>
+            <option value="Adulto">Adulto (3–7 anos)</option>
+            <option value="Idoso">Idoso (7+ anos)</option>
+          </Select>
+
+          <Select name="preferencia_sexo" label="Sexo">
+            <option value="">Qualquer</option>
+            <option value="Macho">Macho</option>
+            <option value="Fêmea">Fêmea</option>
+          </Select>
+
+          <Select name="aceita_especial" label="Aceita necessidades especiais?">
+            <option value="">Selecione...</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+            <option value="Depende">Depende do caso</option>
+          </Select>
+
+          <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: "16px" }}>
+            {loading ? "Cadastrando..." : "Criar conta"}
+          </button>
+        </form>
+      </div>
+
+      <div className="auth-footer" style={{ marginTop: "16px" }}>
+        <span>Já tem conta? </span>
+        <button onClick={onBack}>Entrar</button>
       </div>
     </div>
   );

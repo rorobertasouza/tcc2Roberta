@@ -1,32 +1,36 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Auth from "./components/Auth.jsx";
+import Auth from "./components/Auth.jsx";       // login de usuário
 import Home from "./pages/Home";
-import Listagem from "./pages/Listagem";
-import PetDetail from "./pages/Detail";
-import Config from "./pages/Config";
 import CadastroPet from "./pages/CadastroPet";
-import OngRegister from "./components/OngRegister.jsx"; // nova página de cadastro de ONG
+import OngRegister from "./components/OngRegister.jsx";
+import OngLogin from "./components/OngLogin.jsx";       // login da ONG
+import Profile from "./components/Profile";
+import MyMatches from "./components/MyMatches";
+
+
+
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Login */}
+        {/* Login usuário */}
         <Route path="/" element={<Auth />} />
 
         {/* Páginas principais */}
         <Route path="/home" element={<Home />} />
-        <Route path="/listagem" element={<Listagem />} />
-        <Route path="/pet/:id" element={<PetDetail />} />
-        <Route path="/config" element={<Config />} />
+        <Route path="/perfil" element={<Profile />} />
+        <Route path="/matches" element={<MyMatches />} />
 
         {/* Cadastro de pets (ONG) */}
         <Route path="/cadastro-pet" element={<CadastroPet />} />
 
-        {/* Cadastro de ONG */}
+        {/* Fluxo ONG */}
         <Route path="/ong-register" element={<OngRegister />} />
+        <Route path="/ong-login" element={<OngLogin />} />
+        <Route path="/dashboard" element={<CadastroPet />} />
       </Routes>
     </BrowserRouter>
   );

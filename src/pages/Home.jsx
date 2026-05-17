@@ -1,6 +1,11 @@
-import React from "react";   // ✅ FALTAVA ISSO
+import React from "react";
+import AppShell from "../components/AppShell.jsx";
 import PetApp from "../components/PetApp.jsx";
 
 export default function Home() {
-  return <PetApp />;
+  return (
+    <AppShell>
+      <PetApp />
+    </AppShell>
+  );
 }
