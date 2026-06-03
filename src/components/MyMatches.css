@@ -21,7 +21,6 @@
   padding: 16px 16px 0;
 }
 
-
 .match-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -39,22 +38,49 @@
   box-shadow: var(--shadow-md);
 }
 
-@keyframes cardEnter {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
+.match-card.adopted {
+  border-color: rgba(67, 233, 123, .3);
+}
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Image with adopted overlay ── */
+.match-card-image-wrap {
+  position: relative;
+  overflow: hidden;
 }
 
 .match-card-image {
   width: 100%;
   height: 180px;
   object-fit: cover;
+  transition: filter 0.3s ease;
+}
+
+.match-card.adopted .match-card-image {
+  filter: brightness(0.85);
+}
+
+.match-adopted-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0d3321;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 800;
+  box-shadow: 0 3px 12px rgba(67, 233, 123, .5);
+  animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes badgePop {
+  0%   { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .match-card-body {
@@ -89,28 +115,158 @@
   color: var(--text-muted);
 }
 
+/* ── Action buttons ── */
+.match-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
 
 .btn-whatsapp {
-  width: 100%;
-  padding: 12px;
+  flex: 1;
+  padding: 10px 12px;
   border: none;
   border-radius: var(--radius-full);
   background: linear-gradient(135deg, #25d366, #128c7e);
   color: white;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(37, 211, 102, .3);
-  margin-top: 4px;
+  box-shadow: 0 3px 12px rgba(37, 211, 102, .3);
 }
 
 .btn-whatsapp:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(37, 211, 102, .4);
+  box-shadow: 0 6px 18px rgba(37, 211, 102, .4);
+}
+
+.btn-confirm-adopt {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  box-shadow: 0 3px 12px rgba(102, 126, 234, .35);
+}
+
+.btn-confirm-adopt:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(102, 126, 234, .45);
+}
+
+.btn-confirm-adopt:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-confirm-adopt.loading {
+  animation: pulseLoading 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseLoading {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+.btn-adopted-confirmed {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0d3321;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ── Toast ── */
+.matches-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 9999;
+  animation: toastSlide 0.3s ease;
+  box-shadow: var(--shadow-lg);
+}
+
+.matches-toast.success {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0d3321;
+}
+
+.matches-toast.error {
+  background: linear-gradient(135deg, #fe3c72, #ff6036);
+  color: white;
+}
+
+@keyframes toastSlide {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ─────────────────────────────────────────────────────
+   DESKTOP — Grid layout for matches
+───────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .matches-page {
+    padding: 0 0 24px;
+  }
+
+  .matches-hero {
+    padding: 24px 32px 12px;
+  }
+
+  .matches-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px 32px 0;
+  }
+
+  .match-card-image {
+    height: 200px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .matches-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 24px 40px 0;
+    max-width: 1200px;
+  }
+
+  .matches-hero {
+    padding: 28px 40px 14px;
+    max-width: 1200px;
+  }
+
+  .match-card-image {
+    height: 220px;
+  }
 }

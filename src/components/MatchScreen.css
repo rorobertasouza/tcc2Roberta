@@ -11,6 +11,8 @@
   z-index: 2000;
   animation: fadeInOverlay 0.4s ease;
   backdrop-filter: blur(10px);
+  overflow-y: auto;
+  padding: 20px 0;
 }
 
 @keyframes fadeInOverlay {
@@ -26,9 +28,10 @@
 .match-content {
   text-align: center;
   animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  max-width: 400px;
+  max-width: 500px;
   width: 90%;
   padding: 20px;
+  margin: auto;
 }
 
 @keyframes scaleIn {
@@ -189,4 +192,63 @@
 .continue-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
+}
+
+/* ── Desktop match screen ── */
+@media (min-width: 768px) {
+  .match-content {
+    max-width: 520px;
+    padding: 40px;
+  }
+
+  .match-title {
+    font-size: 3.2rem;
+  }
+
+  .match-pet-photo {
+    width: 220px;
+    height: 220px;
+  }
+
+  .match-pet-name {
+    font-size: 1.8rem;
+  }
+
+  .match-btn {
+    width: 320px;
+    padding: 16px 40px;
+    font-size: 1.05rem;
+  }
+}
+
+/* ── Mobile-friendly screen adjustments for height/width boundaries ── */
+@media (max-width: 480px), (max-height: 740px) {
+  .match-title {
+    font-size: 2.1rem;
+    margin-bottom: 4px;
+  }
+  .match-subtitle {
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+  }
+  .match-pet-photo {
+    width: 130px;
+    height: 130px;
+    margin-bottom: 12px;
+  }
+  .match-pet-name {
+    font-size: 1.4rem;
+  }
+  .match-pet-details {
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+  }
+  .match-actions {
+    gap: 10px;
+  }
+  .match-btn {
+    width: 260px;
+    padding: 11px 24px;
+    font-size: 0.92rem;
+  }
 }

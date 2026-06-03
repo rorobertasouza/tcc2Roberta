@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Register from "./Register.jsx";
+import ForgotPassword from "./ForgotPassword.jsx";
+import { API_BASE } from "../config.js";
 import "../styles.css";
 
 export default function Auth() {
   const [isRegister, setIsRegister] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,7 +24,7 @@ export default function Auth() {
     formData.append("email", email);
     formData.append("password", password);
 
-    fetch("http://localhost/find-animal-friend-react/api/login.php", {
+    fetch(`${API_BASE}/login.php`, {
       method: "POST",
       body: formData,
     })
@@ -38,6 +41,10 @@ export default function Auth() {
       .catch(() => setError("Erro de conexão. Tente novamente."))
       .finally(() => setLoading(false));
   };
+
+  if (isForgotPassword) {
+    return <ForgotPassword onBack={() => setIsForgotPassword(false)} />;
+  }
 
   if (isRegister) {
     return <Register onBack={() => setIsRegister(false)} />;
@@ -82,7 +89,26 @@ export default function Auth() {
           </div>
 
           <div className="auth-field">
-            <label htmlFor="password">Senha</label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label htmlFor="password">Senha</label>
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--brand-primary)",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: 0,
+                  textDecoration: "underline",
+                  marginBottom: "6px"
+                }}
+              >
+                Esqueceu a senha?
+              </button>
+            </div>
             <input
               id="password"
               type="password"
@@ -108,7 +134,7 @@ export default function Auth() {
       <div className="auth-footer" style={{ marginTop: "10px" }}>
         <Link
           to="/ong-login"
-          style={{ color: "rgba(255,255,255,.65)", fontSize: "0.83rem", textDecoration: "none" }}
+          style={{ color: "var(--text-secondary)", fontSize: "0.83rem", textDecoration: "none" }}
         >
           Sou uma ONG → Acessar painel
         </Link>

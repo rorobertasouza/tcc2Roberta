@@ -17,7 +17,9 @@ if ($conn->connect_error) {
 }
 
 // Aceitar user_id da sessão OU do parâmetro (fallback para CORS)
-$user_id = $_SESSION["user_id"] ?? ($_GET["user_id"] ?? ($_POST["user_id"] ?? null));
+$input = json_decode(file_get_contents("php://input"), true);
+if (!$input) $input = [];
+$user_id = $input["user_id"] ?? ($_GET["user_id"] ?? ($_POST["user_id"] ?? ($_SESSION["user_id"] ?? null)));
 
 if (!$user_id) {
     echo json_encode(["success" => false, "message" => "Usuário não autenticado"]);

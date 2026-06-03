@@ -1,0 +1,219 @@
+/* ========== Favoritos Page ========== */
+
+.favoritos-page {
+  padding: 16px 20px 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.favoritos-hero {
+  text-align: center;
+  padding: 20px 0 16px;
+}
+
+.favoritos-count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ── Grid ── */
+.favoritos-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 600px) {
+  .favoritos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1000px) {
+  .favoritos-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── Card ── */
+.fav-card {
+  background: var(--surface-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.25s var(--easing), box-shadow 0.25s ease;
+  animation: fadeSlideUp 0.5s ease both;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fav-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.fav-card.fav-adopted {
+  opacity: 0.75;
+}
+
+.fav-card.fav-adopted .fav-card-image {
+  filter: grayscale(40%);
+}
+
+/* ── Image ── */
+.fav-card-image-wrap {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.fav-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.fav-card:hover .fav-card-image {
+  transform: scale(1.05);
+}
+
+.fav-adopted-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0d3321;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(67,233,123,.4);
+}
+
+.fav-remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,.45);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.fav-remove-btn:hover {
+  background: rgba(254,60,114,.8);
+  transform: scale(1.1);
+}
+
+/* ── Card Body ── */
+.fav-card-body {
+  padding: 14px 16px 18px;
+}
+
+.fav-card-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.fav-card-breed {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+
+.fav-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.fav-date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+/* ── Like button ── */
+.fav-like-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--brand-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-pink);
+  transition: transform 0.2s var(--easing), box-shadow 0.2s ease;
+}
+
+.fav-like-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(254,60,114,.4);
+}
+
+.fav-like-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Toast ── */
+.fav-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 9999;
+  animation: toastIn 0.3s ease;
+  box-shadow: var(--shadow-lg);
+}
+
+.fav-toast.success {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0d3321;
+}
+
+.fav-toast.error {
+  background: linear-gradient(135deg, #fe3c72, #ff6036);
+  color: white;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

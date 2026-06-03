@@ -11,8 +11,51 @@ function resolveImage($img, $baseUrl) {
     return $baseUrl . ltrim($img, '/');
 }
 
+// Função Haversine para calcular distância entre dois pontos geográficos (em km)
+function haversineDistance($lat1, $lng1, $lat2, $lng2) {
+    if ($lat1 === null || $lng1 === null || $lat2 === null || $lng2 === null) return null;
+    $earthRadius = 6371; // km
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLng = deg2rad($lng2 - $lng1);
+    $a = sin($dLat / 2) * sin($dLat / 2) +
+         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+         sin($dLng / 2) * sin($dLng / 2);
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+    return round($earthRadius * $c, 1);
+}
+
 // Verificar se há um usuário logado para filtragem
-$user_id = $_SESSION["user_id"] ?? ($_GET["user_id"] ?? null);
+$input = json_decode(file_get_contents("php://input"), true);
+if (!$input) $input = [];
+$user_id = $input["user_id"] ?? ($_GET["user_id"] ?? ($_POST["user_id"] ?? ($_SESSION["user_id"] ?? null)));
+
+// Coordenadas do usuário (para cálculo de distância)
+$user_lat = $_GET["user_lat"] ?? null;
+$user_lng = $_GET["user_lng"] ?? null;
+
+// Se não veio via query param, buscar do banco
+if ($user_id && ($user_lat === null || $user_lng === null)) {
+    $locStmt = $conn->prepare("SELECT latitude, longitude FROM users WHERE id = ?");
+    $locStmt->bind_param("i", $user_id);
+    $locStmt->execute();
+    $locResult = $locStmt->get_result();
+    if ($locRow = $locResult->fetch_assoc()) {
+        if ($user_lat === null) $user_lat = $locRow["latitude"];
+        if ($user_lng === null) $user_lng = $locRow["longitude"];
+    }
+}
+
+// Buscar IDs dos favoritos do usuário
+$favoritosIds = [];
+if ($user_id) {
+    $favStmt = $conn->prepare("SELECT pet_id FROM favoritos WHERE user_id = ?");
+    $favStmt->bind_param("i", $user_id);
+    $favStmt->execute();
+    $favResult = $favStmt->get_result();
+    while ($favRow = $favResult->fetch_assoc()) {
+        $favoritosIds[] = intval($favRow["pet_id"]);
+    }
+}
 
 if ($user_id) {
     // Buscar preferências do usuário
@@ -22,10 +65,10 @@ if ($user_id) {
     $userResult = $userStmt->get_result();
     $userPrefs = $userResult->fetch_assoc();
 
-    // Montar query que exclui APENAS pets já vistos (like ou dislike)
-    // NÃO filtramos por preferências aqui — usamos scoring para ordenar
+    // Buscar pets não vistos (inclui adotados para mostrar flag em tempo real)
     $sql = "SELECT p.id, p.name, p.description, p.image, p.age, p.breed, 
-                   p.location, p.size, p.gender, p.contact, p.vaccinated, p.neutered
+                   p.location, p.size, p.gender, p.contact, p.vaccinated, p.neutered,
+                   p.adotado, p.latitude, p.longitude
             FROM pets p 
             WHERE p.id NOT IN (SELECT pet_id FROM matches WHERE user_id = ?)
             ORDER BY p.id DESC";
@@ -42,8 +85,6 @@ if ($user_id) {
         $totalWeight = 0;
 
         // ── Espécie/raça: 30% ──────────────────────────────────────────
-        // breed no banco pode ser null ou o nome da raça.
-        // preferencia_especie pode ser "Cachorro","Gato" (genérico) ou raça específica.
         if (!empty($userPrefs["preferencia_especie"])) {
             $totalWeight += 30;
             $prefEsp  = strtolower(trim($userPrefs["preferencia_especie"]));
@@ -54,27 +95,24 @@ if ($user_id) {
 
             if ($breedVal !== "") {
                 if (stripos($breedVal, $prefEsp) !== false) {
-                    $score += 30; // match exato
+                    $score += 30;
                 } elseif ($isGenericDog && stripos($breedVal, "gato") === false) {
-                    $score += 20; // preferência cachorro + breed não é gato
+                    $score += 20;
                 } elseif ($isGenericCat && stripos($breedVal, "gato") !== false) {
-                    $score += 20; // preferência gato + breed é gato
+                    $score += 20;
                 }
             } else {
-                // breed nula: assume cachorro (maioria dos abrigos)
                 if ($isGenericDog) $score += 15;
-                elseif (!$isGenericCat) $score += 10; // raça específica, incerto
+                elseif (!$isGenericCat) $score += 10;
             }
         }
 
         // ── Porte: 25% ─────────────────────────────────────────────────
-        // preferencia_porte pode ser "P","M","G" ou "Pequeno","Médio","Grande"
         if (!empty($userPrefs["preferencia_porte"])) {
             $totalWeight += 25;
             $prefPorte = strtolower(trim($userPrefs["preferencia_porte"]));
             $sizeVal   = strtolower(trim($row["size"] ?? ""));
 
-            // mapa letra → variantes aceitas
             $porteVariants = [
                 "p" => ["p", "pequeno"],
                 "m" => ["m", "médio", "medio"],
@@ -96,7 +134,6 @@ if ($user_id) {
         }
 
         // ── Faixa etária: 20% ──────────────────────────────────────────
-        // age no banco é INT (anos); preferência é "Filhote","Jovem","Adulto","Idoso"
         if (!empty($userPrefs["preferencia_idade"])) {
             $totalWeight += 20;
             $prefIdade = strtolower(trim($userPrefs["preferencia_idade"]));
@@ -110,7 +147,7 @@ if ($user_id) {
 
                 if (stripos($prefIdade, $faixa) !== false) $score += 20;
             } else {
-                $score += 10; // age desconhecida: score parcial neutro
+                $score += 10;
             }
         }
 
@@ -131,15 +168,15 @@ if ($user_id) {
         }
 
         // ── Calcular porcentagem ────────────────────────────────────────
-        // Se nenhuma preferência definida → 100%
-        // Se há preferências: mapeia [0..totalWeight] → [50..100]
-        // Garantindo mínimo de 50% para todos os pets visíveis
         $compatibility = $totalWeight > 0
             ? max(50, min(100, 50 + round(($score / $totalWeight) * 50)))
             : 100;
 
+        // ── Calcular distância ──────────────────────────────────────────
+        $distancia = haversineDistance($user_lat, $user_lng, $row["latitude"], $row["longitude"]);
+
         $pets[] = [
-            "id"              => $row["id"],
+            "id"              => intval($row["id"]),
             "nome"            => $row["name"],
             "descricao"       => $row["description"],
             "foto"            => resolveImage($row["image"], $baseUrl),
@@ -151,7 +188,12 @@ if ($user_id) {
             "contato"         => $row["contact"],
             "vacinado"        => $row["vaccinated"],
             "castrado"        => $row["neutered"],
-            "compatibilidade" => $compatibility
+            "adotado"         => intval($row["adotado"]),
+            "compatibilidade" => $compatibility,
+            "latitude"        => $row["latitude"] !== null ? floatval($row["latitude"]) : null,
+            "longitude"       => $row["longitude"] !== null ? floatval($row["longitude"]) : null,
+            "distancia_km"    => $distancia !== null ? floatval($distancia) : null,
+            "favorito"        => in_array(intval($row["id"]), $favoritosIds) ? 1 : 0,
         ];
     }
 
@@ -162,25 +204,30 @@ if ($user_id) {
 
     echo json_encode($pets);
 } else {
-    // Sem usuário logado: retorna todos os pets sem filtragem
-    $result = $conn->query("SELECT id, name, description, image, age, breed, location, size, gender, contact, vaccinated, neutered FROM pets");
+    // Sem usuário logado: retorna todos os pets
+    $result = $conn->query("SELECT id, name, description, image, age, breed, location, size, gender, contact, vaccinated, neutered, adotado, latitude, longitude FROM pets");
 
     $pets = [];
     while ($row = $result->fetch_assoc()) {
         $pets[] = [
-            "id" => $row["id"],
-            "nome" => $row["name"],
-            "descricao" => $row["description"],
-            "foto" => resolveImage($row["image"], $baseUrl),
-            "idade" => $row["age"],
-            "especie" => $row["breed"],
-            "local" => $row["location"],
-            "porte" => $row["size"],
-            "sexo" => $row["gender"],
-            "contato" => $row["contact"],
-            "vacinado" => $row["vaccinated"],
-            "castrado" => $row["neutered"],
-            "compatibilidade" => 100
+            "id"              => intval($row["id"]),
+            "nome"            => $row["name"],
+            "descricao"       => $row["description"],
+            "foto"            => resolveImage($row["image"], $baseUrl),
+            "idade"           => $row["age"],
+            "especie"         => $row["breed"],
+            "local"           => $row["location"],
+            "porte"           => $row["size"],
+            "sexo"            => $row["gender"],
+            "contato"         => $row["contact"],
+            "vacinado"        => $row["vaccinated"],
+            "castrado"        => $row["neutered"],
+            "adotado"         => intval($row["adotado"]),
+            "compatibilidade" => 100,
+            "latitude"        => $row["latitude"] !== null ? floatval($row["latitude"]) : null,
+            "longitude"       => $row["longitude"] !== null ? floatval($row["longitude"]) : null,
+            "distancia_km"    => null,
+            "favorito"        => 0,
         ];
     }
 

@@ -12,7 +12,9 @@ function resolveImage($img, $baseUrl) {
 }
 
 // Aceitar user_id da sessão OU do parâmetro (fallback para CORS)
-$user_id = $_SESSION["user_id"] ?? ($_GET["user_id"] ?? null);
+$input = json_decode(file_get_contents("php://input"), true);
+if (!$input) $input = [];
+$user_id = $input["user_id"] ?? ($_GET["user_id"] ?? ($_POST["user_id"] ?? ($_SESSION["user_id"] ?? null)));
 
 if (!$user_id) {
     echo json_encode(["success" => false, "message" => "Usuário não autenticado"]);
@@ -35,6 +37,7 @@ if ($u = $userResult->fetch_assoc()) {
 $stmt = $conn->prepare("
     SELECT p.id, p.name, p.description, p.image, p.age, p.breed,
            p.location, p.size, p.gender, p.contact, p.vaccinated, p.neutered,
+           p.adotado,
            m.created_at as matched_at
     FROM matches m
     INNER JOIN pets p ON m.pet_id = p.id
@@ -63,6 +66,7 @@ while ($row = $result->fetch_assoc()) {
         "contato" => $row["contact"],
         "vacinado" => $row["vaccinated"],
         "castrado" => $row["neutered"],
+        "adotado" => intval($row["adotado"]),
         "matched_at" => $row["matched_at"],
         "whatsapp_url" => "https://wa.me/55{$contato}?text={$mensagem}"
     ];

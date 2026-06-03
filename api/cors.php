@@ -8,7 +8,10 @@ $allowedOrigins = [
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if (in_array($origin, $allowedOrigins, true)) {
+// Aceitar origins do Ngrok (*.ngrok-free.app, *.ngrok-free.dev e *.ngrok.io)
+$isNgrok = preg_match('/^https?:\/\/[a-z0-9\-]+\.ngrok(-free\.(app|dev)|\.io)$/i', $origin);
+
+if (in_array($origin, $allowedOrigins, true) || $isNgrok) {
     header("Access-Control-Allow-Origin: $origin");
 }
 

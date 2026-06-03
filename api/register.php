@@ -30,6 +30,17 @@ if (!$email || !$password) {
     exit;
 }
 
+// Verificar se email já existe
+$check = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$check->bind_param("s", $email);
+$check->execute();
+$check->store_result();
+if ($check->num_rows > 0) {
+    echo json_encode(["success" => false, "message" => "Este email já está cadastrado."]);
+    exit;
+}
+$check->close();
+
 // 🔒 Criptografa a senha
 $senhaHash = password_hash($password, PASSWORD_DEFAULT);
 

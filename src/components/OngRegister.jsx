@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { API_BASE } from "../config.js";
 import "../styles.css";
 
 export default function OngRegister() {
@@ -16,7 +17,7 @@ export default function OngRegister() {
     setLoading(true);
     setErro("");
     try {
-      const res  = await fetch("http://localhost/find-animal-friend-react/api/ongregister.php", {
+      const res  = await fetch(`${API_BASE}/ongregister.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -112,13 +113,13 @@ export default function OngRegister() {
 
       <div className="auth-footer" style={{ marginTop: "16px" }}>
         <span>Já tem conta? </span>
-        <Link to="/ong-login" style={{ color: "white", fontWeight: 700 }}>
+        <Link to="/ong-login" style={{ fontWeight: 700 }}>
           Fazer login
         </Link>
       </div>
 
       <div className="auth-footer" style={{ marginTop: "10px" }}>
-        <Link to="/" style={{ color: "rgba(255,255,255,.6)", fontSize: "0.82rem", textDecoration: "none" }}>
+        <Link to="/" style={{ color: "var(--text-secondary)", fontSize: "0.82rem", textDecoration: "none" }}>
           ← Voltar para o app
         </Link>
       </div>

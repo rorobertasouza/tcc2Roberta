@@ -3,9 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "../styles.css";
 
 const NAV_ITEMS = [
-  { path: "/home",    icon: "🐾", label: "Explorar" },
-  { path: "/matches", icon: "❤️", label: "Matches"  },
-  { path: "/perfil",  icon: "👤", label: "Perfil"   },
+  { path: "/home",       icon: "🐾", label: "Explorar" },
+  { path: "/favoritos",  icon: "⭐", label: "Favoritos" },
+  { path: "/matches",    icon: "❤️", label: "Matches"  },
+  { path: "/pos-adocao", icon: "📋", label: "Pós-Adoção" },
+  { path: "/perfil",     icon: "👤", label: "Perfil"   },
 ];
 
 export default function AppShell({ children, title }) {
@@ -14,7 +16,7 @@ export default function AppShell({ children, title }) {
 
   return (
     <div className="app-shell">
-      {/* ── Header ── */}
+      {/* ── Header (visible only on mobile) ── */}
       <header className="app-header">
         <div className="app-header__logo">
           <span>🐾</span>
@@ -27,7 +29,7 @@ export default function AppShell({ children, title }) {
         {children}
       </main>
 
-      {/* ── Bottom Navigation ── */}
+      {/* ── Navigation (bottom bar on mobile, sidebar on desktop) ── */}
       <nav className="app-navbar">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path;
@@ -39,7 +41,7 @@ export default function AppShell({ children, title }) {
               aria-label={item.label}
             >
               <span className="nav-icon">{item.icon}</span>
-              {item.label}
+              <span className="nav-label">{item.label}</span>
             </button>
           );
         })}

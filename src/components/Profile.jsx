@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AppShell from "./AppShell.jsx";
+import { API_BASE } from "../config.js";
 import "./Profile.css";
-
-const API_BASE = "http://localhost/find-animal-friend-react/api";
 
 export default function Profile() {
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const navigate = useNavigate();
 
   const [profile, setProfile] = useState({
     nome: storedUser.nome || "",
@@ -66,6 +67,30 @@ export default function Profile() {
         showToast("Erro de conexão", "error");
         setSaving(false);
       });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
+  const handleResetChoices = () => {
+    if (!window.confirm("Resetar todas as escolhas de pets? Você verá todos os pets novamente.")) return;
+    fetch(`${API_BASE}/reset_matches.php`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: storedUser.id }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast(`✅ ${data.deleted} escolha(s) resetada(s)!`, "success");
+        } else {
+          showToast(data.message || "Erro ao resetar", "error");
+        }
+      })
+      .catch(() => showToast("Erro de conexão", "error"));
   };
 
   const handleCancel = () => {
@@ -183,6 +208,16 @@ export default function Profile() {
               <button className="edit-btn" onClick={() => setIsEditing(true)}>
                 ✏️ Editar Perfil
               </button>
+
+              {/* Reset & Logout */}
+              <div className="profile-account-actions">
+                <button className="reset-choices-btn" onClick={handleResetChoices}>
+                  🔄 Resetar Escolhas de Pets
+                </button>
+                <button className="logout-profile-btn" onClick={handleLogout}>
+                  🚪 Sair da Conta
+                </button>
+              </div>
             </>
           ) : (
             /* ===== EDIT MODE ===== */
@@ -278,12 +313,9 @@ export default function Profile() {
                         <option value="Vira-lata">Vira-lata</option>
                         <option value="Labrador">Labrador</option>
                         <option value="Poodle">Poodle</option>
-                        <option value="Bulldog">Bulldog</option>
                         <option value="Pastor Alemão">Pastor Alemão</option>
                         <option value="Golden Retriever">Golden Retriever</option>
-                        <option value="Pitbull">Pitbull</option>
                         <option value="Shih Tzu">Shih Tzu</option>
-                        <option value="Gato">Gato</option>
                         <option value="Gato Vira-lata">Gato Vira-lata</option>
                         <option value="Siamês">Siamês</option>
                         <option value="Persa">Persa</option>

@@ -8,13 +8,15 @@ import OngRegister from "./components/OngRegister.jsx";
 import OngLogin from "./components/OngLogin.jsx";       // login da ONG
 import Profile from "./components/Profile";
 import MyMatches from "./components/MyMatches";
+import Favoritos from "./components/Favoritos";
+import PosAdocao from "./components/PosAdocao";
 
 
 
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/find-animal-friend-react/dist">
       <Routes>
         {/* Login usuário */}
         <Route path="/" element={<Auth />} />
@@ -23,6 +25,8 @@ export default function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/perfil" element={<Profile />} />
         <Route path="/matches" element={<MyMatches />} />
+        <Route path="/favoritos" element={<Favoritos />} />
+        <Route path="/pos-adocao" element={<PosAdocao />} />
 
         {/* Cadastro de pets (ONG) */}
         <Route path="/cadastro-pet" element={<CadastroPet />} />

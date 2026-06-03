@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { API_BASE } from "../config.js";
 import "../styles.css";
 
 export default function Register({ onBack }) {
+  const [step, setStep] = useState(1); // Steps: 1=conta, 2=estilo, 3=preferencias
   const [form, setForm] = useState({
     name: "", email: "", password: "",
     residencia: "", espaco: "", tempo: "", experiencia: "",
@@ -14,6 +16,9 @@ export default function Register({ onBack }) {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  const setField = (name, value) =>
+    setForm(f => ({ ...f, [name]: f[name] === value ? "" : value }));
+
   const handleRegister = (e) => {
     e.preventDefault();
     setLoading(true);
@@ -22,7 +27,7 @@ export default function Register({ onBack }) {
     const formData = new FormData();
     Object.entries(form).forEach(([k, v]) => formData.append(k, v));
 
-    fetch("http://localhost/find-animal-friend-react/api/register.php", {
+    fetch(`${API_BASE}/register.php`, {
       method: "POST",
       body: formData,
     })
@@ -39,154 +44,239 @@ export default function Register({ onBack }) {
       .finally(() => setLoading(false));
   };
 
-  const Field = ({ name, label, type = "text", placeholder }) => (
-    <div className="auth-field">
-      <label htmlFor={name}>{label}</label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        placeholder={placeholder}
-        value={form[name]}
-        onChange={handleChange}
-      />
-    </div>
-  );
-
-  const Select = ({ name, label, children }) => (
-    <div className="auth-field">
-      <label htmlFor={name}>{label}</label>
-      <select
-        id={name}
-        name={name}
-        value={form[name]}
-        onChange={handleChange}
-        style={{
-          width: "100%", padding: "13px 16px",
-          border: "2px solid var(--border)", borderRadius: "var(--radius-md)",
-          fontSize: "0.95rem", fontFamily: "inherit", outline: "none",
-          background: "var(--surface-soft)", color: "var(--text-primary)",
-          appearance: "none",
-        }}
-      >
-        {children}
-      </select>
-    </div>
-  );
+  const canGoStep2 = form.name && form.email && form.password;
+  const canGoStep3 = form.residencia && form.espaco && form.tempo;
 
   return (
-    <div className="auth-screen" style={{ paddingTop: "40px", paddingBottom: "40px" }}>
-      <h1 className="auth-logo">🐾 Criar Conta</h1>
-      <p className="auth-tagline">Preencha seu perfil para encontrar o pet ideal</p>
+    <div className="reg-screen">
+      <div className="reg-container">
+        {/* Header */}
+        <div className="reg-header">
+          <h1>🐾 Criar Conta</h1>
+          <p>Encontre seu companheiro ideal</p>
+        </div>
 
-      <div className="auth-card" style={{ maxWidth: "420px", overflowY: "auto", maxHeight: "80vh" }}>
-        <h2>Cadastro</h2>
-
-        {error && (
-          <div style={{
-            background: "#fff0f3", border: "1px solid rgba(254,60,114,.3)",
-            borderRadius: "10px", padding: "10px 14px",
-            color: "var(--brand-primary)", fontSize: "0.88rem",
-            fontWeight: 600, marginBottom: "14px",
-          }}>
-            {error}
+        {/* Progress steps */}
+        <div className="reg-progress">
+          {[1, 2, 3].map(s => (
+            <div key={s} className={`reg-step-dot ${step >= s ? "active" : ""} ${step === s ? "current" : ""}`}>
+              {s}
+            </div>
+          ))}
+          <div className="reg-progress-line">
+            <div className="reg-progress-fill" style={{ width: `${((step - 1) / 2) * 100}%` }} />
           </div>
-        )}
+        </div>
+
+        {/* Error */}
+        {error && <div className="reg-error">{error}</div>}
 
         <form onSubmit={handleRegister}>
-          <Field name="name"     label="Nome completo"  placeholder="Seu nome" />
-          <Field name="email"    label="Email"           type="email" placeholder="seu@email.com" />
-          <Field name="password" label="Senha"           type="password" placeholder="••••••••" />
 
-          <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "16px 0" }} />
-          <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "12px" }}>
-            🏠 Seu estilo de vida
-          </p>
+          {/* ── Step 1: Conta ── */}
+          {step === 1 && (
+            <div className="reg-step" key="step1">
+              <h2 className="reg-step-title">👤 Seus Dados</h2>
 
-          <Select name="residencia" label="Tipo de residência">
-            <option value="">Selecione...</option>
-            <option value="Casa">Casa</option>
-            <option value="Apartamento">Apartamento</option>
-            <option value="Sítio/Chácara">Sítio/Chácara</option>
-            <option value="Outro">Outro</option>
-          </Select>
+              <div className="reg-field">
+                <label>Nome completo</label>
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Seu nome"
+                  className="reg-input"
+                  required
+                />
+              </div>
 
-          <Select name="espaco" label="Espaço disponível">
-            <option value="">Selecione...</option>
-            <option value="Pequeno">Pequeno</option>
-            <option value="Médio">Médio</option>
-            <option value="Grande">Grande</option>
-            <option value="Com quintal">Com quintal</option>
-          </Select>
+              <div className="reg-field">
+                <label>Email</label>
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="seu@email.com"
+                  className="reg-input"
+                  required
+                />
+              </div>
 
-          <Select name="tempo" label="Tempo livre para o pet">
-            <option value="">Selecione...</option>
-            <option value="Pouco">Pouco (trabalho o dia todo)</option>
-            <option value="Moderado">Moderado (meio período fora)</option>
-            <option value="Bastante">Bastante (home office)</option>
-            <option value="Integral">Integral (estou sempre em casa)</option>
-          </Select>
+              <div className="reg-field">
+                <label>Senha</label>
+                <input
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="reg-input"
+                  required
+                />
+              </div>
 
-          <Select name="experiencia" label="Experiência com pets">
-            <option value="">Selecione...</option>
-            <option value="Nenhuma">Nenhuma (primeiro pet)</option>
-            <option value="Pouca">Pouca</option>
-            <option value="Moderada">Moderada</option>
-            <option value="Muita">Muita</option>
-          </Select>
+              <button
+                type="button"
+                className="reg-next-btn"
+                disabled={!canGoStep2}
+                onClick={() => setStep(2)}
+              >
+                Continuar →
+              </button>
+            </div>
+          )}
 
-          <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "16px 0" }} />
-          <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "12px" }}>
-            🐾 Preferências de pet
-          </p>
+          {/* ── Step 2: Estilo de vida ── */}
+          {step === 2 && (
+            <div className="reg-step" key="step2">
+              <h2 className="reg-step-title">🏠 Seu Estilo de Vida</h2>
 
-          <Select name="preferencia_especie" label="Espécie preferida">
-            <option value="">Qualquer</option>
-            <option value="Vira-lata">Vira-lata</option>
-            <option value="Labrador">Labrador</option>
-            <option value="Poodle">Poodle</option>
-            <option value="Golden Retriever">Golden Retriever</option>
-            <option value="Gato">Gato</option>
-            <option value="Gato Vira-lata">Gato Vira-lata</option>
-          </Select>
+              <div className="reg-field">
+                <label>Tipo de residência</label>
+                <div className="reg-pills">
+                  {["Casa", "Apartamento", "Sítio/Chácara", "Outro"].map(v => (
+                    <button key={v} type="button" className={`reg-pill ${form.residencia === v ? "active" : ""}`} onClick={() => setField("residencia", v)}>
+                      {v === "Casa" && "🏡 "}{v === "Apartamento" && "🏢 "}{v === "Sítio/Chácara" && "🌾 "}{v === "Outro" && "📍 "}{v}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <Select name="preferencia_porte" label="Porte preferido">
-            <option value="">Qualquer</option>
-            <option value="P">Pequeno (P)</option>
-            <option value="M">Médio (M)</option>
-            <option value="G">Grande (G)</option>
-          </Select>
+              <div className="reg-field">
+                <label>Espaço disponível</label>
+                <div className="reg-pills">
+                  {["Pequeno", "Médio", "Grande", "Com quintal"].map(v => (
+                    <button key={v} type="button" className={`reg-pill ${form.espaco === v ? "active" : ""}`} onClick={() => setField("espaco", v)}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <Select name="preferencia_idade" label="Faixa etária">
-            <option value="">Qualquer</option>
-            <option value="Filhote">Filhote (0–1 ano)</option>
-            <option value="Jovem">Jovem (1–3 anos)</option>
-            <option value="Adulto">Adulto (3–7 anos)</option>
-            <option value="Idoso">Idoso (7+ anos)</option>
-          </Select>
+              <div className="reg-field">
+                <label>Tempo livre para o pet</label>
+                <div className="reg-pills col">
+                  {[
+                    { val: "Pouco", label: "⏰ Pouco — trabalho o dia todo" },
+                    { val: "Moderado", label: "🕐 Moderado — meio período fora" },
+                    { val: "Bastante", label: "💻 Bastante — home office" },
+                    { val: "Integral", label: "🏠 Integral — sempre em casa" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button" className={`reg-pill full ${form.tempo === opt.val ? "active" : ""}`} onClick={() => setField("tempo", opt.val)}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <Select name="preferencia_sexo" label="Sexo">
-            <option value="">Qualquer</option>
-            <option value="Macho">Macho</option>
-            <option value="Fêmea">Fêmea</option>
-          </Select>
+              <div className="reg-field">
+                <label>Experiência com pets</label>
+                <div className="reg-pills">
+                  {["Nenhuma", "Pouca", "Moderada", "Muita"].map(v => (
+                    <button key={v} type="button" className={`reg-pill ${form.experiencia === v ? "active" : ""}`} onClick={() => setField("experiencia", v)}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <Select name="aceita_especial" label="Aceita necessidades especiais?">
-            <option value="">Selecione...</option>
-            <option value="Sim">Sim</option>
-            <option value="Não">Não</option>
-            <option value="Depende">Depende do caso</option>
-          </Select>
+              <div className="reg-nav-row">
+                <button type="button" className="reg-back-btn" onClick={() => setStep(1)}>← Voltar</button>
+                <button type="button" className="reg-next-btn" disabled={!canGoStep3} onClick={() => setStep(3)}>
+                  Continuar →
+                </button>
+              </div>
+            </div>
+          )}
 
-          <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: "16px" }}>
-            {loading ? "Cadastrando..." : "Criar conta"}
-          </button>
+          {/* ── Step 3: Preferências ── */}
+          {step === 3 && (
+            <div className="reg-step" key="step3">
+              <h2 className="reg-step-title">🐾 Preferências de Pet</h2>
+              <p className="reg-step-hint">Toque para selecionar (opcional)</p>
+
+              <div className="reg-field">
+                <label>Espécie</label>
+                <div className="reg-pills">
+                  {["Cachorro", "Gato", "Qualquer"].map(v => (
+                    <button key={v} type="button" className={`reg-pill ${form.preferencia_especie === v ? "active" : ""}`} onClick={() => setField("preferencia_especie", v)}>
+                      {v === "Cachorro" && "🐕 "}{v === "Gato" && "🐈 "}{v === "Qualquer" && "🐾 "}{v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="reg-field">
+                <label>Porte</label>
+                <div className="reg-pills">
+                  {[
+                    { val: "P", label: "🐕 Pequeno" },
+                    { val: "M", label: "🐕‍🦺 Médio" },
+                    { val: "G", label: "🦮 Grande" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button" className={`reg-pill ${form.preferencia_porte === opt.val ? "active" : ""}`} onClick={() => setField("preferencia_porte", opt.val)}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="reg-field">
+                <label>Faixa etária</label>
+                <div className="reg-pills">
+                  {[
+                    { val: "Filhote", label: "🍼 Filhote" },
+                    { val: "Jovem", label: "🐶 Jovem" },
+                    { val: "Adulto", label: "🐕 Adulto" },
+                    { val: "Idoso", label: "🧓 Idoso" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button" className={`reg-pill ${form.preferencia_idade === opt.val ? "active" : ""}`} onClick={() => setField("preferencia_idade", opt.val)}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="reg-field">
+                <label>Sexo</label>
+                <div className="reg-pills">
+                  {[
+                    { val: "Macho", label: "♂️ Macho" },
+                    { val: "Fêmea", label: "♀️ Fêmea" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button" className={`reg-pill ${form.preferencia_sexo === opt.val ? "active" : ""}`} onClick={() => setField("preferencia_sexo", opt.val)}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="reg-field">
+                <label>Aceita necessidades especiais?</label>
+                <div className="reg-pills">
+                  {["Sim", "Não", "Depende"].map(v => (
+                    <button key={v} type="button" className={`reg-pill ${form.aceita_especial === v ? "active" : ""}`} onClick={() => setField("aceita_especial", v)}>
+                      {v === "Sim" && "💚 "}{v === "Não" && "❌ "}{v === "Depende" && "🤔 "}{v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="reg-nav-row">
+                <button type="button" className="reg-back-btn" onClick={() => setStep(2)}>← Voltar</button>
+                <button type="submit" className="reg-submit" disabled={loading}>
+                  {loading ? "⏳ Criando..." : "🐾 Criar Conta"}
+                </button>
+              </div>
+            </div>
+          )}
         </form>
-      </div>
 
-      <div className="auth-footer" style={{ marginTop: "16px" }}>
-        <span>Já tem conta? </span>
-        <button onClick={onBack}>Entrar</button>
+        <div className="reg-footer">
+          <span>Já tem conta? </span>
+          <button onClick={onBack}>Entrar</button>
+        </div>
       </div>
     </div>
   );

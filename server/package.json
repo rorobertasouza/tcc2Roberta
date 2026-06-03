@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "ws-server.js",
   "scripts": {
+    "start": "node ws-server.js",
     "dev": "node ws-server.js"
   },
   "dependencies": {

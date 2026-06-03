@@ -17,7 +17,7 @@ $pet_id = $input["pet_id"] ?? ($_POST["pet_id"] ?? null);
 $action = $input["action"] ?? ($_POST["action"] ?? null);
 
 // Aceitar user_id da sessão OU do body (fallback para CORS)
-$user_id = $_SESSION["user_id"] ?? ($input["user_id"] ?? ($_POST["user_id"] ?? null));
+$user_id = $input["user_id"] ?? ($_POST["user_id"] ?? ($_GET["user_id"] ?? ($_SESSION["user_id"] ?? null)));
 
 if (!$user_id) {
     echo json_encode(["success" => false, "message" => "Usuário não autenticado"]);

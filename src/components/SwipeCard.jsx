@@ -1,14 +1,178 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import "./SwipeCard.css";
 
-export default function SwipeCard({ pet, onLike, onDislike }) {
+// Fix Leaflet default marker icons (webpack/vite issue)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+const petIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const userIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+function getHaversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return Math.round(2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+}
+
+// ── Map Modal Component ──
+function MapModal({ pet, userLocation, onClose }) {
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+
+  const petLat = pet.latitude ? Number(pet.latitude) : null;
+  const petLng = pet.longitude ? Number(pet.longitude) : null;
+  const userLat = userLocation?.latitude || null;
+  const userLng = userLocation?.longitude || null;
+
+  const hasPetLocation = petLat !== null && petLng !== null;
+  const hasUserLocation = userLat !== null && userLng !== null;
+  const distance = hasPetLocation && hasUserLocation
+    ? getHaversineDistance(userLat, userLng, petLat, petLng)
+    : null;
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current) return;
+
+    // Default center: pet location, user location, or São Paulo
+    const centerLat = hasPetLocation ? petLat : hasUserLocation ? userLat : -23.55;
+    const centerLng = hasPetLocation ? petLng : hasUserLocation ? userLng : -46.63;
+
+    const map = L.map(mapRef.current, {
+      center: [centerLat, centerLng],
+      zoom: 13,
+      zoomControl: true,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
+
+    const bounds = [];
+
+    // Pet marker
+    if (hasPetLocation) {
+      L.marker([petLat, petLng], { icon: petIcon })
+        .addTo(map)
+        .bindPopup(`<strong>🐾 ${pet.nome}</strong><br/>${pet.local || pet.especie || ''}`);
+      bounds.push([petLat, petLng]);
+    }
+
+    // User marker
+    if (hasUserLocation) {
+      L.marker([userLat, userLng], { icon: userIcon })
+        .addTo(map)
+        .bindPopup('<strong>📍 Você está aqui</strong>');
+      bounds.push([userLat, userLng]);
+    }
+
+    // Distance line between both
+    if (hasPetLocation && hasUserLocation) {
+      L.polyline([[userLat, userLng], [petLat, petLng]], {
+        color: '#fe3c72',
+        weight: 3,
+        dashArray: '8, 8',
+        opacity: 0.7,
+      }).addTo(map);
+    }
+
+    // Fit bounds if we have multiple points
+    if (bounds.length === 2) {
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+    } else if (bounds.length === 1) {
+      map.setView(bounds[0], 14);
+    }
+
+    mapInstanceRef.current = map;
+
+    // Resize fix
+    setTimeout(() => map.invalidateSize(), 200);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  return (
+    <div className="map-modal-overlay" onClick={onClose}>
+      <div className="map-modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="map-modal-close" onClick={onClose}>✕</button>
+
+        <div className="map-modal-header">
+          <h3>📍 Localização de {pet.nome}</h3>
+          {distance !== null && (
+            <span className="map-distance-badge">
+              🗺️ {distance} km de distância
+            </span>
+          )}
+        </div>
+
+        <div className="map-container" ref={mapRef}></div>
+
+        <div className="map-legend">
+          <div className="map-legend-item">
+            <span className="legend-dot pet-dot"></span>
+            <span>🐾 {pet.nome} {pet.local ? `(${pet.local})` : ''}</span>
+          </div>
+          {hasUserLocation && (
+            <div className="map-legend-item">
+              <span className="legend-dot user-dot"></span>
+              <span>📍 Sua localização</span>
+            </div>
+          )}
+          {!hasPetLocation && (
+            <p className="map-no-location">⚠️ Localização do pet não disponível no mapa</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavoriteAndAdvance, isFavorited, userLocation }) {
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [exitDirection, setExitDirection] = useState(null);
+  const [showMap, setShowMap] = useState(false);
   const startX = useRef(0);
+  const hasMoved = useRef(false);
   const cardRef = useRef(null);
 
   const SWIPE_THRESHOLD = 100;
+  const isAdopted = pet.adotado === 1;
 
   // Calcular classe do badge de compatibilidade
   const getCompatibilityClass = () => {
@@ -20,9 +184,11 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
 
   // Drag handlers
   const handlePointerDown = (e) => {
-    // Não inicia drag se o clique veio de um botão
+    if (isAdopted) return;
     if (e.target.closest('button')) return;
+    if (e.target.closest('.map-hint-badge')) return;
     startX.current = e.clientX;
+    hasMoved.current = false;
     setIsDragging(true);
     if (cardRef.current) {
       cardRef.current.setPointerCapture(e.pointerId);
@@ -32,6 +198,7 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
   const handlePointerMove = (e) => {
     if (!isDragging) return;
     const delta = e.clientX - startX.current;
+    if (Math.abs(delta) > 5) hasMoved.current = true;
     setDragX(delta);
   };
 
@@ -40,21 +207,18 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
     setIsDragging(false);
 
     if (dragX > SWIPE_THRESHOLD) {
-      // Swipe para direita = like
       setExitDirection("right");
       setTimeout(() => {
         onLike();
         resetCard();
       }, 450);
     } else if (dragX < -SWIPE_THRESHOLD) {
-      // Swipe para esquerda = dislike
       setExitDirection("left");
       setTimeout(() => {
         onDislike();
         resetCard();
       }, 450);
     } else {
-      // Não atingiu o threshold, volta ao centro
       setDragX(0);
     }
   };
@@ -64,8 +228,8 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
     setExitDirection(null);
   };
 
-  // Like/Dislike via botões
   const handleLikeClick = () => {
+    if (isAdopted) return;
     setExitDirection("right");
     setTimeout(() => {
       onLike();
@@ -74,6 +238,7 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
   };
 
   const handleDislikeClick = () => {
+    if (isAdopted) return;
     setExitDirection("left");
     setTimeout(() => {
       onDislike();
@@ -81,11 +246,28 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
     }, 450);
   };
 
-  // Calcular opacidade do overlay baseado no arraste
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation();
+    if (onFavorite) onFavorite(pet.id);
+  };
+
+  const handleFavoriteAndAdvance = (e) => {
+    e.stopPropagation();
+    if (onFavoriteAndAdvance) {
+      setExitDirection("fav");
+      setTimeout(() => {
+        onFavoriteAndAdvance(pet.id);
+        resetCard();
+      }, 450);
+    } else {
+      handleFavoriteClick(e);
+    }
+  };
+
+  // Calcular opacidade do overlay
   const likeOpacity = isDragging && dragX > 20 ? Math.min(dragX / SWIPE_THRESHOLD, 1) : 0;
   const dislikeOpacity = isDragging && dragX < -20 ? Math.min(Math.abs(dragX) / SWIPE_THRESHOLD, 1) : 0;
 
-  // Rotação durante o arraste
   const rotation = isDragging ? dragX * 0.08 : 0;
 
   const cardStyle = exitDirection
@@ -95,7 +277,7 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
         transition: isDragging ? "none" : "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
       };
 
-  const cardClass = `swipe-card ${exitDirection === "right" ? "swipe-right" : ""} ${exitDirection === "left" ? "swipe-left" : ""}`;
+  const cardClass = `swipe-card ${exitDirection === "right" ? "swipe-right" : ""} ${exitDirection === "left" ? "swipe-left" : ""} ${exitDirection === "fav" ? "swipe-fav" : ""} ${isAdopted ? "adopted" : ""}`;
 
   return (
     <>
@@ -116,14 +298,59 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
             <span className="overlay-icon">✖️</span>
           </div>
 
-          {/* Imagem */}
+          {/* Overlay de adotado */}
+          {isAdopted && (
+            <div className="adopted-overlay">
+              <div className="adopted-badge-big">
+                <span>🏠</span>
+                <span>Adotado!</span>
+              </div>
+              <p className="adopted-msg">Este pet já encontrou um lar! 🎉</p>
+            </div>
+          )}
+
+          {/* Imagem — clique abre o mapa */}
           <div className="pet-image-container">
-            <img className="pet-image" src={pet.foto} alt={pet.nome} />
-            {pet.compatibilidade !== undefined && (
+            <img
+              className="pet-image"
+              src={pet.foto}
+              alt={pet.nome}
+              onPointerUp={(e) => {
+                if (!hasMoved.current && !exitDirection) {
+                  e.stopPropagation();
+                  setShowMap(true);
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            />
+            <div
+              className="map-hint-badge"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); setShowMap(true); }}
+            >
+              📍 Ver no mapa
+            </div>
+            
+            {/* Badge de compatibilidade ou adotado */}
+            {isAdopted ? (
+              <span className="compatibility-badge adopted">
+                🏠 Adotado
+              </span>
+            ) : pet.compatibilidade !== undefined ? (
               <span className={`compatibility-badge ${getCompatibilityClass()}`}>
                 {pet.compatibilidade}% compatível
               </span>
-            )}
+            ) : null}
+
+            {/* Botão favoritar */}
+            <button
+              className={`favorite-btn ${isFavorited ? "favorited" : ""}`}
+              onClick={handleFavoriteClick}
+              aria-label={isFavorited ? "Remover favorito" : "Favoritar"}
+              title={isFavorited ? "Remover favorito" : "Salvar para depois"}
+            >
+              {isFavorited ? "⭐" : "☆"}
+            </button>
           </div>
 
           {/* Informações */}
@@ -135,7 +362,11 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
             <div className="pet-tags">
               {pet.porte && <span className="pet-tag">📏 {pet.porte}</span>}
               {pet.sexo && <span className="pet-tag">{pet.sexo === "Macho" || pet.sexo === "M" ? "♂️" : "♀️"} {pet.sexo}</span>}
-              {pet.local && <span className="pet-tag">📍 {pet.local}</span>}
+              {pet.distancia_km !== null && pet.distancia_km !== undefined ? (
+                <span className="pet-tag distance-tag">📍 {pet.distancia_km} km</span>
+              ) : pet.local ? (
+                <span className="pet-tag">📍 {pet.local}</span>
+              ) : null}
               {pet.vacinado && <span className="pet-tag">💉 {pet.vacinado}</span>}
             </div>
           </div>
@@ -148,17 +379,35 @@ export default function SwipeCard({ pet, onLike, onDislike }) {
           className="action-btn dislike-btn"
           onClick={handleDislikeClick}
           aria-label="Não curtir"
+          disabled={isAdopted}
         >
           ✖️
+        </button>
+        <button
+          className={`action-btn fav-action-btn ${isFavorited ? "favorited" : ""}`}
+          onClick={handleFavoriteAndAdvance}
+          aria-label="Favoritar e avançar"
+        >
+          {isFavorited ? "⭐" : "☆"}
         </button>
         <button
           className="action-btn like-btn"
           onClick={handleLikeClick}
           aria-label="Curtir"
+          disabled={isAdopted}
         >
           ❤️
         </button>
       </div>
+
+      {/* Modal do Mapa */}
+      {showMap && (
+        <MapModal
+          pet={pet}
+          userLocation={userLocation}
+          onClose={() => setShowMap(false)}
+        />
+      )}
     </>
   );
 }

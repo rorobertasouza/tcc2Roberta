@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  background: var(--surface-soft);
+  background: transparent;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
@@ -54,6 +54,7 @@
 
 .profile-hero {
   position: relative;
+  z-index: 1;
   background: var(--brand-gradient);
   padding: 32px 20px 52px;
   display: flex;
@@ -139,7 +140,6 @@
   background: rgba(255, 255, 255, .5);
 }
 
-/* ── Body (cards flutuam sobre o hero) ── */
 .profile-body {
   flex: 1;
   padding: 0 16px 24px;
@@ -147,6 +147,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
+  z-index: 10 !important;
 }
 
 /* ── Info cards ── */
@@ -444,5 +446,128 @@
 
   .pref-chips {
     gap: 6px;
+  }
+}
+
+/* ── Account Actions (Reset / Logout) ── */
+.profile-account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.reset-choices-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, .3);
+  transition: all 0.25s ease;
+}
+
+.reset-choices-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(102, 126, 234, .5);
+}
+
+.logout-profile-btn {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  color: #e55;
+  border: 2px solid #fde;
+  border-radius: var(--radius-full);
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-profile-btn:hover {
+  background: #fff5f5;
+  border-color: #e55;
+}
+
+/* ─────────────────────────────────────────────────────
+   DESKTOP — Profile layout
+───────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .profile-hero {
+    padding: 40px 32px 60px;
+  }
+
+  .profile-hero::before {
+    width: 400px;
+    height: 400px;
+    top: -140px;
+    right: -80px;
+  }
+
+  .profile-hero::after {
+    width: 300px;
+    height: 300px;
+    bottom: -80px;
+    left: -60px;
+  }
+
+  .profile-avatar {
+    width: 110px;
+    height: 110px;
+    font-size: 2.8rem;
+  }
+
+  .profile-name {
+    font-size: 2rem;
+  }
+
+  .profile-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .profile-body {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: -32px;
+    padding: 0 32px 32px;
+    gap: 16px;
+    position: relative !important;
+    z-index: 10 !important;
+  }
+
+  .info-card-header {
+    padding: 16px 20px 12px;
+    font-size: 0.85rem;
+  }
+
+  .info-row {
+    padding: 14px 20px;
+  }
+
+  .pref-chips {
+    padding: 14px 20px;
+  }
+
+  .profile-form-inner {
+    padding: 20px;
+    gap: 14px;
+  }
+
+  .form-actions {
+    padding: 18px 20px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .profile-body {
+    max-width: 900px;
   }
 }
