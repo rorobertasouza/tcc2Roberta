@@ -94,16 +94,16 @@ export default function Favoritos() {
         <div className="favoritos-hero">
           <p className="favoritos-count">
             {favoritos.length > 0
-              ? `${favoritos.length} pet${favoritos.length > 1 ? "s" : ""} salvos ⭐`
+              ? `${favoritos.length} pet${favoritos.length > 1 ? "s" : ""} salvos`
               : "Seus favoritos aparecerão aqui"}
           </p>
         </div>
 
         {favoritos.length === 0 ? (
           <div className="empty-state">
-            <span className="empty-icon">⭐</span>
+            <span className="empty-icon">☆</span>
             <h3>Nenhum favorito ainda</h3>
-            <p>Toque na estrela ☆ nos cards para salvar pets que você quer decidir depois!</p>
+            <p>Toque na estrela nos cards para salvar pets que você quer decidir depois!</p>
           </div>
         ) : (
           <div className="favoritos-grid">
@@ -118,9 +118,10 @@ export default function Favoritos() {
                     className="fav-card-image"
                     src={pet.foto}
                     alt={pet.nome}
+                    onError={(e) => { e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect width='200' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' font-size='14' fill='%23999'%3EImagem indispon%C3%ADvel%3C/text%3E%3C/svg%3E"; }}
                   />
                   {pet.adotado === 1 && (
-                    <span className="fav-adopted-badge">🏠 Adotado</span>
+                    <span className="fav-adopted-badge">Adotado</span>
                   )}
                   <button
                     className="fav-remove-btn"
@@ -134,22 +135,22 @@ export default function Favoritos() {
                 <div className="fav-card-body">
                   <h3 className="fav-card-name">{pet.nome}</h3>
                   <p className="fav-card-breed">
-                    🐾 {pet.especie}
+                    {pet.especie}
                     {pet.idade ? ` · ${pet.idade} anos` : ""}
                   </p>
 
                   <div className="fav-card-tags">
-                    {pet.porte && <span className="chip">📏 {pet.porte}</span>}
+                    {pet.porte && <span className="chip">{pet.porte}</span>}
                     {pet.sexo && (
                       <span className="chip">
                         {pet.sexo === "Macho" || pet.sexo === "M" ? "♂️" : "♀️"} {pet.sexo}
                       </span>
                     )}
-                    {pet.local && <span className="chip">📍 {pet.local}</span>}
+                    {pet.local && <span className="chip">{pet.local}</span>}
                   </div>
 
                   {pet.favoritado_em && (
-                    <p className="fav-date">⭐ Salvo em {formatDate(pet.favoritado_em)}</p>
+                    <p className="fav-date">Salvo em {formatDate(pet.favoritado_em)}</p>
                   )}
 
                   {!pet.adotado && (

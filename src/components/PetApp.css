@@ -1,45 +1,300 @@
-/* PetApp — área de swipe dentro do AppShell */
+/* ========== PetApp Layout ========== */
+
 .tinder-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  padding: 20px 16px 16px;
-  position: relative;
-  background: transparent;
-  gap: 0;
+  min-height: calc(100dvh - 70px);
+  padding: 20px;
+  gap: 6px;
 }
 
-/* Loading */
-.loading-state {
+/* ── View Mode Toggle ── */
+.view-mode-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--surface-card, #f5f5f5);
+  border-radius: var(--radius-full, 24px);
+  padding: 3px;
+  margin-bottom: 12px;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,.08);
+}
+
+.mode-btn {
+  padding: 7px 22px;
+  border: none;
+  border-radius: var(--radius-full, 24px);
+  background: transparent;
+  color: var(--text-muted, #999);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.mode-btn.active {
+  background: var(--brand-gradient, linear-gradient(135deg, #fe3c72, #ff6036));
+  color: white;
+  box-shadow: 0 3px 12px rgba(254, 60, 114, .35);
+}
+
+.mode-btn:not(.active):hover {
+  color: var(--text-primary, #333);
+  background: rgba(0,0,0,.04);
+}
+
+/* ── List Filters ── */
+.list-filters {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-select {
+  padding: 8px 14px;
+  border: 1.5px solid var(--border, #e5e5e5);
+  border-radius: var(--radius-full, 20px);
+  background: var(--surface, white);
+  color: var(--text-primary, #333);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  min-width: 120px;
+}
+
+.filter-select:focus {
+  border-color: var(--brand-primary, #fe3c72);
+  box-shadow: 0 0 0 3px rgba(254, 60, 114, .12);
+}
+
+/* ── List Grid ── */
+.list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 640px;
+  padding-bottom: 80px;
+  animation: listFadeIn 0.3s ease;
+}
+
+@keyframes listFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── List Card ── */
+.list-card {
+  background: var(--surface, white);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  transition: all 0.25s ease;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  color: var(--text-muted);
 }
 
-.loading-spinner {
-  width: 44px;
-  height: 44px;
-  border: 3px solid var(--border);
-  border-top-color: var(--brand-primary);
+.list-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,.12);
+}
+
+.list-card-adopted {
+  opacity: 0.65;
+}
+
+.list-card-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.list-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.list-card:hover .list-card-img {
+  transform: scale(1.05);
+}
+
+.list-adopted-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0d3321;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.list-compat-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--brand-gradient, linear-gradient(135deg, #fe3c72, #ff6036));
+  color: white;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.list-compat-badge.high {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0d3321;
+}
+
+.list-compat-badge.medium {
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  color: #4a3520;
+}
+
+.list-card-body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.list-card-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary, #333);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-card-breed {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #666);
+  margin: 0;
+}
+
+.list-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.list-tag {
+  background: #f5f5f8;
+  color: var(--text-secondary, #666);
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.list-tag-distance {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.list-card-waiting {
+  font-size: 0.68rem;
+  color: #e65100;
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.list-card-interest {
+  font-size: 0.68rem;
+  color: #5c6bc0;
+  margin: 0;
+  font-weight: 600;
+}
+
+.list-card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.list-fav-btn {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.loading-state p {
+  border: 1.5px solid #e0e0e0;
+  background: white;
   font-size: 1rem;
-  color: var(--text-muted);
-  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #ccc;
+  flex-shrink: 0;
 }
 
-/* ── Desktop: center swipe area properly ── */
+.list-fav-btn.active {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  border-color: transparent;
+  color: white;
+}
+
+.list-fav-btn:hover:not(.active) {
+  border-color: #ffd700;
+  color: #ffd700;
+}
+
+.list-like-btn {
+  flex: 1;
+  padding: 7px 12px;
+  border: none;
+  border-radius: var(--radius-full, 20px);
+  background: var(--brand-gradient, linear-gradient(135deg, #fe3c72, #ff6036));
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(254, 60, 114, .25);
+}
+
+.list-like-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(254, 60, 114, .4);
+}
+
+/* ── Desktop Adjustments ── */
 @media (min-width: 768px) {
   .tinder-container {
-    padding: 32px 24px 24px;
+    min-height: calc(100dvh - 40px);
+  }
+
+  .list-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    max-width: 780px;
+    gap: 16px;
+  }
+
+  .list-filters {
+    max-width: 780px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .list-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    max-width: 900px;
   }
 }

@@ -58,7 +58,6 @@ function MapModal({ pet, userLocation, onClose }) {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
-    // Default center: pet location, user location, or São Paulo
     const centerLat = hasPetLocation ? petLat : hasUserLocation ? userLat : -23.55;
     const centerLng = hasPetLocation ? petLng : hasUserLocation ? userLng : -46.63;
 
@@ -75,23 +74,20 @@ function MapModal({ pet, userLocation, onClose }) {
 
     const bounds = [];
 
-    // Pet marker
     if (hasPetLocation) {
       L.marker([petLat, petLng], { icon: petIcon })
         .addTo(map)
-        .bindPopup(`<strong>🐾 ${pet.nome}</strong><br/>${pet.local || pet.especie || ''}`);
+        .bindPopup(`<strong>${pet.nome}</strong><br/>${pet.local || pet.especie || ''}`);
       bounds.push([petLat, petLng]);
     }
 
-    // User marker
     if (hasUserLocation) {
       L.marker([userLat, userLng], { icon: userIcon })
         .addTo(map)
-        .bindPopup('<strong>📍 Você está aqui</strong>');
+        .bindPopup('<strong>Sua localização</strong>');
       bounds.push([userLat, userLng]);
     }
 
-    // Distance line between both
     if (hasPetLocation && hasUserLocation) {
       L.polyline([[userLat, userLng], [petLat, petLng]], {
         color: '#fe3c72',
@@ -101,7 +97,6 @@ function MapModal({ pet, userLocation, onClose }) {
       }).addTo(map);
     }
 
-    // Fit bounds if we have multiple points
     if (bounds.length === 2) {
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
     } else if (bounds.length === 1) {
@@ -109,8 +104,6 @@ function MapModal({ pet, userLocation, onClose }) {
     }
 
     mapInstanceRef.current = map;
-
-    // Resize fix
     setTimeout(() => map.invalidateSize(), 200);
 
     return () => {
@@ -119,7 +112,6 @@ function MapModal({ pet, userLocation, onClose }) {
     };
   }, []);
 
-  // Close on Escape
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleKey);
@@ -132,10 +124,10 @@ function MapModal({ pet, userLocation, onClose }) {
         <button className="map-modal-close" onClick={onClose}>✕</button>
 
         <div className="map-modal-header">
-          <h3>📍 Localização de {pet.nome}</h3>
+          <h3>Localização de {pet.nome}</h3>
           {distance !== null && (
             <span className="map-distance-badge">
-              🗺️ {distance} km de distância
+              {distance} km de distância
             </span>
           )}
         </div>
@@ -145,16 +137,16 @@ function MapModal({ pet, userLocation, onClose }) {
         <div className="map-legend">
           <div className="map-legend-item">
             <span className="legend-dot pet-dot"></span>
-            <span>🐾 {pet.nome} {pet.local ? `(${pet.local})` : ''}</span>
+            <span>{pet.nome} {pet.local ? `(${pet.local})` : ''}</span>
           </div>
           {hasUserLocation && (
             <div className="map-legend-item">
               <span className="legend-dot user-dot"></span>
-              <span>📍 Sua localização</span>
+              <span>Sua localização</span>
             </div>
           )}
           {!hasPetLocation && (
-            <p className="map-no-location">⚠️ Localização do pet não disponível no mapa</p>
+            <p className="map-no-location">Localização do pet não disponível no mapa</p>
           )}
         </div>
       </div>
@@ -162,11 +154,16 @@ function MapModal({ pet, userLocation, onClose }) {
   );
 }
 
+// ── Fallback image placeholder ──
+const FALLBACK_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='45%25' text-anchor='middle' font-family='Arial' font-size='48' fill='%23ccc'%3E%F0%9F%90%BE%3C/text%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-family='Arial' font-size='16' fill='%23999'%3EImagem indispon%C3%ADvel%3C/text%3E%3C/svg%3E";
+
 export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavoriteAndAdvance, isFavorited, userLocation }) {
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [exitDirection, setExitDirection] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const [showBio, setShowBio] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const startX = useRef(0);
   const hasMoved = useRef(false);
   const cardRef = useRef(null);
@@ -174,7 +171,6 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
   const SWIPE_THRESHOLD = 100;
   const isAdopted = pet.adotado === 1;
 
-  // Calcular classe do badge de compatibilidade
   const getCompatibilityClass = () => {
     if (!pet.compatibilidade) return "";
     if (pet.compatibilidade >= 80) return "high";
@@ -187,6 +183,7 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
     if (isAdopted) return;
     if (e.target.closest('button')) return;
     if (e.target.closest('.map-hint-badge')) return;
+    if (e.target.closest('.bio-section')) return;
     startX.current = e.clientX;
     hasMoved.current = false;
     setIsDragging(true);
@@ -264,7 +261,6 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
     }
   };
 
-  // Calcular opacidade do overlay
   const likeOpacity = isDragging && dragX > 20 ? Math.min(dragX / SWIPE_THRESHOLD, 1) : 0;
   const dislikeOpacity = isDragging && dragX < -20 ? Math.min(Math.abs(dragX) / SWIPE_THRESHOLD, 1) : 0;
 
@@ -278,6 +274,8 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
       };
 
   const cardClass = `swipe-card ${exitDirection === "right" ? "swipe-right" : ""} ${exitDirection === "left" ? "swipe-left" : ""} ${exitDirection === "fav" ? "swipe-fav" : ""} ${isAdopted ? "adopted" : ""}`;
+
+  const hasBioInfo = pet.origem || pet.motivo_adocao || pet.tempo_aguardando || pet.descricao;
 
   return (
     <>
@@ -302,10 +300,9 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
           {isAdopted && (
             <div className="adopted-overlay">
               <div className="adopted-badge-big">
-                <span>🏠</span>
                 <span>Adotado!</span>
               </div>
-              <p className="adopted-msg">Este pet já encontrou um lar! 🎉</p>
+              <p className="adopted-msg">Este pet já encontrou um lar!</p>
             </div>
           )}
 
@@ -313,8 +310,9 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
           <div className="pet-image-container">
             <img
               className="pet-image"
-              src={pet.foto}
+              src={imgError ? FALLBACK_IMAGE : pet.foto}
               alt={pet.nome}
+              onError={() => setImgError(true)}
               onPointerUp={(e) => {
                 if (!hasMoved.current && !exitDirection) {
                   e.stopPropagation();
@@ -328,13 +326,13 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); setShowMap(true); }}
             >
-              📍 Ver no mapa
+              Ver no mapa
             </div>
             
             {/* Badge de compatibilidade ou adotado */}
             {isAdopted ? (
               <span className="compatibility-badge adopted">
-                🏠 Adotado
+                Adotado
               </span>
             ) : pet.compatibilidade !== undefined ? (
               <span className={`compatibility-badge ${getCompatibilityClass()}`}>
@@ -342,33 +340,68 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
               </span>
             ) : null}
 
-            {/* Botão favoritar */}
-            <button
-              className={`favorite-btn ${isFavorited ? "favorited" : ""}`}
-              onClick={handleFavoriteClick}
-              aria-label={isFavorited ? "Remover favorito" : "Favoritar"}
-              title={isFavorited ? "Remover favorito" : "Salvar para depois"}
-            >
-              {isFavorited ? "⭐" : "☆"}
-            </button>
+            {/* Badge de interessados (fila de adoção) */}
+            {pet.interessados > 0 && !isAdopted && (
+              <span className="interest-badge">
+                {pet.interessados} interessado{pet.interessados > 1 ? "s" : ""}
+              </span>
+            )}
+
           </div>
 
           {/* Informações */}
           <div className="pet-info">
             <h3 className="pet-name">{pet.nome}</h3>
             <p className="pet-breed">
-              🐾 {pet.especie} • {pet.idade ? `${pet.idade} anos` : "Idade não informada"}
+              {pet.especie} · {pet.idade ? `${pet.idade} anos` : "Idade não informada"}
             </p>
             <div className="pet-tags">
-              {pet.porte && <span className="pet-tag">📏 {pet.porte}</span>}
-              {pet.sexo && <span className="pet-tag">{pet.sexo === "Macho" || pet.sexo === "M" ? "♂️" : "♀️"} {pet.sexo}</span>}
+              {pet.porte && <span className="pet-tag">{pet.porte}</span>}
+              {pet.sexo && <span className="pet-tag">{pet.sexo === "Macho" || pet.sexo === "M" ? "♂" : "♀"} {pet.sexo}</span>}
               {pet.distancia_km !== null && pet.distancia_km !== undefined ? (
-                <span className="pet-tag distance-tag">📍 {pet.distancia_km} km</span>
+                <span className="pet-tag distance-tag">{pet.distancia_km} km</span>
               ) : pet.local ? (
-                <span className="pet-tag">📍 {pet.local}</span>
+                <span className="pet-tag">{pet.local}</span>
               ) : null}
-              {pet.vacinado && <span className="pet-tag">💉 {pet.vacinado}</span>}
+              {pet.vacinado && <span className="pet-tag">{pet.vacinado === "sim" ? "Vacinado" : pet.vacinado}</span>}
+              {pet.tempo_aguardando && (
+                <span className="pet-tag waiting-tag">Aguarda há {pet.tempo_aguardando}</span>
+              )}
             </div>
+
+            {/* Bio toggle */}
+            {hasBioInfo && (
+              <button
+                className="bio-toggle-btn"
+                onClick={(e) => { e.stopPropagation(); setShowBio(!showBio); }}
+              >
+                {showBio ? "Menos detalhes ▲" : "Mais detalhes ▼"}
+              </button>
+            )}
+
+            {/* Biografia expandida */}
+            {showBio && (
+              <div className="bio-section" onPointerDown={(e) => e.stopPropagation()}>
+                {pet.descricao && (
+                  <div className="bio-item">
+                    <span className="bio-label">Sobre</span>
+                    <p className="bio-text">{pet.descricao}</p>
+                  </div>
+                )}
+                {pet.origem && (
+                  <div className="bio-item">
+                    <span className="bio-label">Origem</span>
+                    <p className="bio-text">{pet.origem}</p>
+                  </div>
+                )}
+                {pet.motivo_adocao && (
+                  <div className="bio-item">
+                    <span className="bio-label">Motivo para adoção</span>
+                    <p className="bio-text">{pet.motivo_adocao}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -381,14 +414,14 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
           aria-label="Não curtir"
           disabled={isAdopted}
         >
-          ✖️
+          ✕
         </button>
         <button
           className={`action-btn fav-action-btn ${isFavorited ? "favorited" : ""}`}
           onClick={handleFavoriteAndAdvance}
           aria-label="Favoritar e avançar"
         >
-          {isFavorited ? "⭐" : "☆"}
+          {isFavorited ? "★" : "☆"}
         </button>
         <button
           className="action-btn like-btn"
@@ -396,7 +429,7 @@ export default function SwipeCard({ pet, onLike, onDislike, onFavorite, onFavori
           aria-label="Curtir"
           disabled={isAdopted}
         >
-          ❤️
+          ❤
         </button>
       </div>
 

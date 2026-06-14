@@ -10,6 +10,7 @@ export default function MyMatches() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adoptingId, setAdoptingId] = useState(null);
+  const [queueingId, setQueueingId] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -51,15 +52,13 @@ export default function MyMatches() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          // Atualizar localmente
           setMatches((prev) =>
             prev.map((m) =>
               m.id === pet.id ? { ...m, adotado: 1 } : m
             )
           );
-          showToast(`🎉 ${pet.nome} foi adotado com sucesso!`);
+          showToast(`${pet.nome} foi adotado com sucesso!`);
 
-          // Notificar via WebSocket se disponível
           try {
             const ws = new WebSocket(`ws://localhost:3002?user_id=${userId}`);
             ws.onopen = () => {
@@ -81,6 +80,41 @@ export default function MyMatches() {
       .catch(() => {
         showToast("Erro de conexão", "error");
         setAdoptingId(null);
+      });
+  };
+
+  const handleEnterQueue = (pet) => {
+    if (queueingId) return;
+    setQueueingId(pet.id);
+
+    fetch(`${API_BASE}/fila_adocao.php`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        action: "entrar", 
+        pet_id: pet.id, 
+        user_id: userId,
+        mensagem: `Interesse registrado por ${storedUser.nome || "usuário"}`
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          showToast(`Você está na posição ${data.posicao} da fila de adoção!`);
+          setMatches((prev) =>
+            prev.map((m) =>
+              m.id === pet.id ? { ...m, na_fila: true, posicao_fila: data.posicao } : m
+            )
+          );
+        } else {
+          showToast(data.message || "Erro ao entrar na fila", "error");
+        }
+        setQueueingId(null);
+      })
+      .catch(() => {
+        showToast("Erro de conexão", "error");
+        setQueueingId(null);
       });
   };
 
@@ -106,8 +140,8 @@ export default function MyMatches() {
         <div className="matches-hero">
           <p className="matches-count">
             {matches.length > 0
-              ? `${matches.length} match${matches.length > 1 ? "es" : ""} 🎉`
-              : "Seus favorites aparecerão aqui"}
+              ? `${matches.length} match${matches.length > 1 ? "es" : ""}`
+              : "Seus matches aparecerão aqui"}
           </p>
         </div>
 
@@ -122,6 +156,7 @@ export default function MyMatches() {
             {matches.map((pet, index) => {
               const isAdopted = pet.adotado === 1;
               const isAdopting = adoptingId === pet.id;
+              const isQueueing = queueingId === pet.id;
 
               return (
                 <div
@@ -134,32 +169,33 @@ export default function MyMatches() {
                       className="match-card-image"
                       src={pet.foto}
                       alt={pet.nome}
+                      onError={(e) => { e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect width='200' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' font-size='14' fill='%23999'%3EImagem indispon%C3%ADvel%3C/text%3E%3C/svg%3E"; }}
                     />
                     {isAdopted && (
                       <div className="match-adopted-badge">
-                        🏠 Adotado!
+                        Adotado!
                       </div>
                     )}
                   </div>
                   <div className="match-card-body">
                     <h3 className="match-card-name">{pet.nome}</h3>
                     <p className="match-card-breed">
-                      🐾 {pet.especie}
+                      {pet.especie}
                       {pet.idade ? ` · ${pet.idade} anos` : ""}
                     </p>
                     <div className="match-card-tags">
-                      {pet.porte   && <span className="chip">📏 {pet.porte}</span>}
+                      {pet.porte   && <span className="chip">{pet.porte}</span>}
                       {pet.sexo    && (
                         <span className="chip">
-                          {pet.sexo === "Macho" || pet.sexo === "M" ? "♂️" : "♀️"} {pet.sexo}
+                          {pet.sexo === "Macho" || pet.sexo === "M" ? "♂" : "♀"} {pet.sexo}
                         </span>
                       )}
-                      {pet.local   && <span className="chip">📍 {pet.local}</span>}
-                      {pet.vacinado && <span className="chip">💉 {pet.vacinado}</span>}
-                      {pet.castrado && <span className="chip">✂️ {pet.castrado}</span>}
+                      {pet.local   && <span className="chip">{pet.local}</span>}
+                      {pet.vacinado && <span className="chip">{pet.vacinado === "sim" ? "Vacinado" : pet.vacinado}</span>}
+                      {pet.castrado && <span className="chip">{pet.castrado === "sim" ? "Castrado" : pet.castrado}</span>}
                     </div>
                     {pet.matched_at && (
-                      <p className="match-date">🕐 Match em {formatDate(pet.matched_at)}</p>
+                      <p className="match-date">Match em {formatDate(pet.matched_at)}</p>
                     )}
 
                     <div className="match-card-actions">
@@ -167,21 +203,34 @@ export default function MyMatches() {
                         className="btn-whatsapp"
                         onClick={() => window.open(pet.whatsapp_url, "_blank")}
                       >
-                        📱 WhatsApp
+                        WhatsApp
                       </button>
 
                       {isAdopted ? (
                         <span className="btn-adopted-confirmed">
-                          ✅ Adoção confirmada
+                          Adoção confirmada
                         </span>
                       ) : (
-                        <button
-                          className={`btn-confirm-adopt ${isAdopting ? "loading" : ""}`}
-                          onClick={() => handleAdopt(pet)}
-                          disabled={isAdopting}
-                        >
-                          {isAdopting ? "⏳ Confirmando..." : "🏠 Confirmar Adoção"}
-                        </button>
+                        <>
+                          <button
+                            className="btn-enter-queue"
+                            onClick={() => handleEnterQueue(pet)}
+                            disabled={isQueueing || pet.na_fila}
+                          >
+                            {pet.na_fila 
+                              ? `Na fila (${pet.posicao_fila || ""})`
+                              : isQueueing 
+                                ? "Entrando..." 
+                                : "Entrar na fila"}
+                          </button>
+                          <button
+                            className={`btn-confirm-adopt ${isAdopting ? "loading" : ""}`}
+                            onClick={() => handleAdopt(pet)}
+                            disabled={isAdopting}
+                          >
+                            {isAdopting ? "Confirmando..." : "Confirmar Adoção"}
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>

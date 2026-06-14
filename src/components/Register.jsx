@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { API_BASE } from "../config.js";
 import "../styles.css";
 
+const ESTADOS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
+  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"
+];
+
 export default function Register({ onBack }) {
   const [step, setStep] = useState(1); // Steps: 1=conta, 2=estilo, 3=preferencias
   const [form, setForm] = useState({
@@ -9,6 +14,7 @@ export default function Register({ onBack }) {
     residencia: "", espaco: "", tempo: "", experiencia: "",
     preferencia_especie: "", preferencia_porte: "",
     preferencia_idade: "", preferencia_sexo: "", aceita_especial: "",
+    tem_pet: "", cidade: "", estado: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -52,7 +58,7 @@ export default function Register({ onBack }) {
       <div className="reg-container">
         {/* Header */}
         <div className="reg-header">
-          <h1>🐾 Criar Conta</h1>
+          <h1>Criar Conta</h1>
           <p>Encontre seu companheiro ideal</p>
         </div>
 
@@ -76,7 +82,7 @@ export default function Register({ onBack }) {
           {/* ── Step 1: Conta ── */}
           {step === 1 && (
             <div className="reg-step" key="step1">
-              <h2 className="reg-step-title">👤 Seus Dados</h2>
+              <h2 className="reg-step-title">Seus Dados</h2>
 
               <div className="reg-field">
                 <label>Nome completo</label>
@@ -130,14 +136,19 @@ export default function Register({ onBack }) {
           {/* ── Step 2: Estilo de vida ── */}
           {step === 2 && (
             <div className="reg-step" key="step2">
-              <h2 className="reg-step-title">🏠 Seu Estilo de Vida</h2>
+              <h2 className="reg-step-title">Seu Estilo de Vida</h2>
 
               <div className="reg-field">
                 <label>Tipo de residência</label>
                 <div className="reg-pills">
-                  {["Casa", "Apartamento", "Sítio/Chácara", "Outro"].map(v => (
-                    <button key={v} type="button" className={`reg-pill ${form.residencia === v ? "active" : ""}`} onClick={() => setField("residencia", v)}>
-                      {v === "Casa" && "🏡 "}{v === "Apartamento" && "🏢 "}{v === "Sítio/Chácara" && "🌾 "}{v === "Outro" && "📍 "}{v}
+                  {[
+                    { val: "Casa", label: "Casa" },
+                    { val: "Apartamento", label: "Apartamento" },
+                    { val: "Sítio/Chácara", label: "Sítio/Chácara" },
+                    { val: "Outro", label: "Outro" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button" className={`reg-pill ${form.residencia === opt.val ? "active" : ""}`} onClick={() => setField("residencia", opt.val)}>
+                      {opt.label}
                     </button>
                   ))}
                 </div>
@@ -158,10 +169,10 @@ export default function Register({ onBack }) {
                 <label>Tempo livre para o pet</label>
                 <div className="reg-pills col">
                   {[
-                    { val: "Pouco", label: "⏰ Pouco — trabalho o dia todo" },
-                    { val: "Moderado", label: "🕐 Moderado — meio período fora" },
-                    { val: "Bastante", label: "💻 Bastante — home office" },
-                    { val: "Integral", label: "🏠 Integral — sempre em casa" },
+                    { val: "Pouco", label: "Pouco — trabalho o dia todo" },
+                    { val: "Moderado", label: "Moderado — meio período fora" },
+                    { val: "Bastante", label: "Bastante — home office" },
+                    { val: "Integral", label: "Integral — sempre em casa" },
                   ].map(opt => (
                     <button key={opt.val} type="button" className={`reg-pill full ${form.tempo === opt.val ? "active" : ""}`} onClick={() => setField("tempo", opt.val)}>
                       {opt.label}
@@ -181,6 +192,44 @@ export default function Register({ onBack }) {
                 </div>
               </div>
 
+              <div className="reg-field">
+                <label>Já tem pet em casa?</label>
+                <div className="reg-pills">
+                  {[
+                    { val: "Sim", label: "Sim" },
+                    { val: "Não", label: "Não" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button" className={`reg-pill ${form.tem_pet === opt.val ? "active" : ""}`} onClick={() => setField("tem_pet", opt.val)}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="reg-field">
+                <label>Sua localização</label>
+                <div className="reg-row">
+                  <input
+                    name="cidade"
+                    value={form.cidade}
+                    onChange={handleChange}
+                    placeholder="Cidade"
+                    className="reg-input"
+                  />
+                  <select
+                    name="estado"
+                    value={form.estado}
+                    onChange={handleChange}
+                    className="reg-input reg-select"
+                  >
+                    <option value="">UF</option>
+                    {ESTADOS.map(uf => (
+                      <option key={uf} value={uf}>{uf}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="reg-nav-row">
                 <button type="button" className="reg-back-btn" onClick={() => setStep(1)}>← Voltar</button>
                 <button type="button" className="reg-next-btn" disabled={!canGoStep3} onClick={() => setStep(3)}>
@@ -193,15 +242,19 @@ export default function Register({ onBack }) {
           {/* ── Step 3: Preferências ── */}
           {step === 3 && (
             <div className="reg-step" key="step3">
-              <h2 className="reg-step-title">🐾 Preferências de Pet</h2>
+              <h2 className="reg-step-title">Preferências de Pet</h2>
               <p className="reg-step-hint">Toque para selecionar (opcional)</p>
 
               <div className="reg-field">
                 <label>Espécie</label>
                 <div className="reg-pills">
-                  {["Cachorro", "Gato", "Qualquer"].map(v => (
-                    <button key={v} type="button" className={`reg-pill ${form.preferencia_especie === v ? "active" : ""}`} onClick={() => setField("preferencia_especie", v)}>
-                      {v === "Cachorro" && "🐕 "}{v === "Gato" && "🐈 "}{v === "Qualquer" && "🐾 "}{v}
+                  {[
+                    { val: "Cachorro", label: "Cachorro" },
+                    { val: "Gato", label: "Gato" },
+                    { val: "Qualquer", label: "Qualquer" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button" className={`reg-pill ${form.preferencia_especie === opt.val ? "active" : ""}`} onClick={() => setField("preferencia_especie", opt.val)}>
+                      {opt.label}
                     </button>
                   ))}
                 </div>
@@ -211,9 +264,9 @@ export default function Register({ onBack }) {
                 <label>Porte</label>
                 <div className="reg-pills">
                   {[
-                    { val: "P", label: "🐕 Pequeno" },
-                    { val: "M", label: "🐕‍🦺 Médio" },
-                    { val: "G", label: "🦮 Grande" },
+                    { val: "P", label: "Pequeno" },
+                    { val: "M", label: "Médio" },
+                    { val: "G", label: "Grande" },
                   ].map(opt => (
                     <button key={opt.val} type="button" className={`reg-pill ${form.preferencia_porte === opt.val ? "active" : ""}`} onClick={() => setField("preferencia_porte", opt.val)}>
                       {opt.label}
@@ -226,10 +279,10 @@ export default function Register({ onBack }) {
                 <label>Faixa etária</label>
                 <div className="reg-pills">
                   {[
-                    { val: "Filhote", label: "🍼 Filhote" },
-                    { val: "Jovem", label: "🐶 Jovem" },
-                    { val: "Adulto", label: "🐕 Adulto" },
-                    { val: "Idoso", label: "🧓 Idoso" },
+                    { val: "Filhote", label: "Filhote" },
+                    { val: "Jovem", label: "Jovem" },
+                    { val: "Adulto", label: "Adulto" },
+                    { val: "Idoso", label: "Idoso" },
                   ].map(opt => (
                     <button key={opt.val} type="button" className={`reg-pill ${form.preferencia_idade === opt.val ? "active" : ""}`} onClick={() => setField("preferencia_idade", opt.val)}>
                       {opt.label}
@@ -242,8 +295,8 @@ export default function Register({ onBack }) {
                 <label>Sexo</label>
                 <div className="reg-pills">
                   {[
-                    { val: "Macho", label: "♂️ Macho" },
-                    { val: "Fêmea", label: "♀️ Fêmea" },
+                    { val: "Macho", label: "Macho" },
+                    { val: "Fêmea", label: "Fêmea" },
                   ].map(opt => (
                     <button key={opt.val} type="button" className={`reg-pill ${form.preferencia_sexo === opt.val ? "active" : ""}`} onClick={() => setField("preferencia_sexo", opt.val)}>
                       {opt.label}
@@ -255,9 +308,13 @@ export default function Register({ onBack }) {
               <div className="reg-field">
                 <label>Aceita necessidades especiais?</label>
                 <div className="reg-pills">
-                  {["Sim", "Não", "Depende"].map(v => (
-                    <button key={v} type="button" className={`reg-pill ${form.aceita_especial === v ? "active" : ""}`} onClick={() => setField("aceita_especial", v)}>
-                      {v === "Sim" && "💚 "}{v === "Não" && "❌ "}{v === "Depende" && "🤔 "}{v}
+                  {[
+                    { val: "Sim", label: "Sim" },
+                    { val: "Não", label: "Não" },
+                    { val: "Depende", label: "Depende do caso" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button" className={`reg-pill ${form.aceita_especial === opt.val ? "active" : ""}`} onClick={() => setField("aceita_especial", opt.val)}>
+                      {opt.label}
                     </button>
                   ))}
                 </div>
@@ -266,7 +323,7 @@ export default function Register({ onBack }) {
               <div className="reg-nav-row">
                 <button type="button" className="reg-back-btn" onClick={() => setStep(2)}>← Voltar</button>
                 <button type="submit" className="reg-submit" disabled={loading}>
-                  {loading ? "⏳ Criando..." : "🐾 Criar Conta"}
+                  {loading ? "Criando..." : "Criar Conta"}
                 </button>
               </div>
             </div>

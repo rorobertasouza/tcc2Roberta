@@ -57,6 +57,24 @@ if ($user_id) {
     }
 }
 
+// Buscar contagem de interessados (matches) por pet
+$interessadosMap = [];
+$intResult = $conn->query("SELECT pet_id, COUNT(*) as total FROM matches WHERE action = 'like' GROUP BY pet_id");
+if ($intResult) {
+    while ($intRow = $intResult->fetch_assoc()) {
+        $interessadosMap[intval($intRow["pet_id"])] = intval($intRow["total"]);
+    }
+}
+
+// Buscar fila de adoção ativa por pet
+$filaMap = [];
+$filaResult = $conn->query("SELECT pet_id, COUNT(*) as na_fila FROM fila_adocao WHERE status = 'na_fila' GROUP BY pet_id");
+if ($filaResult) {
+    while ($filaRow = $filaResult->fetch_assoc()) {
+        $filaMap[intval($filaRow["pet_id"])] = intval($filaRow["na_fila"]);
+    }
+}
+
 if ($user_id) {
     // Buscar preferências do usuário
     $userStmt = $conn->prepare("SELECT preferencia_especie, preferencia_porte, preferencia_idade, preferencia_sexo, aceita_especial FROM users WHERE id = ?");
@@ -68,7 +86,7 @@ if ($user_id) {
     // Buscar pets não vistos (inclui adotados para mostrar flag em tempo real)
     $sql = "SELECT p.id, p.name, p.description, p.image, p.age, p.breed, 
                    p.location, p.size, p.gender, p.contact, p.vaccinated, p.neutered,
-                   p.adotado, p.latitude, p.longitude
+                   p.adotado, p.latitude, p.longitude, p.origem, p.motivo_adocao, p.data_cadastro
             FROM pets p 
             WHERE p.id NOT IN (SELECT pet_id FROM matches WHERE user_id = ?)
             ORDER BY p.id DESC";
@@ -175,8 +193,27 @@ if ($user_id) {
         // ── Calcular distância ──────────────────────────────────────────
         $distancia = haversineDistance($user_lat, $user_lng, $row["latitude"], $row["longitude"]);
 
+        // ── Tempo aguardando adoção ─────────────────────────────────────
+        $tempoAguardando = null;
+        if (!empty($row["data_cadastro"])) {
+            $cadastro = new DateTime($row["data_cadastro"]);
+            $agora = new DateTime();
+            $diff = $cadastro->diff($agora);
+            if ($diff->y > 0) {
+                $tempoAguardando = $diff->y . " ano" . ($diff->y > 1 ? "s" : "");
+            } elseif ($diff->m > 0) {
+                $tempoAguardando = $diff->m . " " . ($diff->m > 1 ? "meses" : "mês");
+            } elseif ($diff->d > 0) {
+                $tempoAguardando = $diff->d . " dia" . ($diff->d > 1 ? "s" : "");
+            } else {
+                $tempoAguardando = "Hoje";
+            }
+        }
+
+        $petId = intval($row["id"]);
+
         $pets[] = [
-            "id"              => intval($row["id"]),
+            "id"              => $petId,
             "nome"            => $row["name"],
             "descricao"       => $row["description"],
             "foto"            => resolveImage($row["image"], $baseUrl),
@@ -193,7 +230,12 @@ if ($user_id) {
             "latitude"        => $row["latitude"] !== null ? floatval($row["latitude"]) : null,
             "longitude"       => $row["longitude"] !== null ? floatval($row["longitude"]) : null,
             "distancia_km"    => $distancia !== null ? floatval($distancia) : null,
-            "favorito"        => in_array(intval($row["id"]), $favoritosIds) ? 1 : 0,
+            "favorito"        => in_array($petId, $favoritosIds) ? 1 : 0,
+            "origem"          => $row["origem"] ?? null,
+            "motivo_adocao"   => $row["motivo_adocao"] ?? null,
+            "tempo_aguardando" => $tempoAguardando,
+            "interessados"    => $interessadosMap[$petId] ?? 0,
+            "na_fila"         => $filaMap[$petId] ?? 0,
         ];
     }
 
@@ -205,12 +247,30 @@ if ($user_id) {
     echo json_encode($pets);
 } else {
     // Sem usuário logado: retorna todos os pets
-    $result = $conn->query("SELECT id, name, description, image, age, breed, location, size, gender, contact, vaccinated, neutered, adotado, latitude, longitude FROM pets");
+    $result = $conn->query("SELECT id, name, description, image, age, breed, location, size, gender, contact, vaccinated, neutered, adotado, latitude, longitude, origem, motivo_adocao, data_cadastro FROM pets");
 
     $pets = [];
     while ($row = $result->fetch_assoc()) {
+        $petId = intval($row["id"]);
+
+        $tempoAguardando = null;
+        if (!empty($row["data_cadastro"])) {
+            $cadastro = new DateTime($row["data_cadastro"]);
+            $agora = new DateTime();
+            $diff = $cadastro->diff($agora);
+            if ($diff->y > 0) {
+                $tempoAguardando = $diff->y . " ano" . ($diff->y > 1 ? "s" : "");
+            } elseif ($diff->m > 0) {
+                $tempoAguardando = $diff->m . " " . ($diff->m > 1 ? "meses" : "mês");
+            } elseif ($diff->d > 0) {
+                $tempoAguardando = $diff->d . " dia" . ($diff->d > 1 ? "s" : "");
+            } else {
+                $tempoAguardando = "Hoje";
+            }
+        }
+
         $pets[] = [
-            "id"              => intval($row["id"]),
+            "id"              => $petId,
             "nome"            => $row["name"],
             "descricao"       => $row["description"],
             "foto"            => resolveImage($row["image"], $baseUrl),
@@ -228,6 +288,11 @@ if ($user_id) {
             "longitude"       => $row["longitude"] !== null ? floatval($row["longitude"]) : null,
             "distancia_km"    => null,
             "favorito"        => 0,
+            "origem"          => $row["origem"] ?? null,
+            "motivo_adocao"   => $row["motivo_adocao"] ?? null,
+            "tempo_aguardando" => $tempoAguardando,
+            "interessados"    => $interessadosMap[$petId] ?? 0,
+            "na_fila"         => $filaMap[$petId] ?? 0,
         ];
     }
 

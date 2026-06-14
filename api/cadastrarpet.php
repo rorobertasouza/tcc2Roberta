@@ -17,9 +17,11 @@ $contato = $_POST["contato"] ?? "";
 $ong_id = $_POST["ong_id"] ?? 0;
 $latitude = !empty($_POST["latitude"]) ? floatval($_POST["latitude"]) : null;
 $longitude = !empty($_POST["longitude"]) ? floatval($_POST["longitude"]) : null;
+$origem = $_POST["origem"] ?? "";
+$motivo_adocao = $_POST["motivo_adocao"] ?? "";
 
-$stmt = $conn->prepare("INSERT INTO pets (name, description, image, age, breed, location, size, gender, vaccinated, neutered, contact, ong_id, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("sssssssssssidd", $nome, $descricao, $foto, $idade, $especie, $local, $porte, $sexo, $vacinado, $castrado, $contato, $ong_id, $latitude, $longitude);
+$stmt = $conn->prepare("INSERT INTO pets (name, description, image, age, breed, location, size, gender, vaccinated, neutered, contact, ong_id, latitude, longitude, origem, motivo_adocao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("sssssssssssiddss", $nome, $descricao, $foto, $idade, $especie, $local, $porte, $sexo, $vacinado, $castrado, $contato, $ong_id, $latitude, $longitude, $origem, $motivo_adocao);
 
 if ($stmt->execute()) {
     echo json_encode(["success" => true, "message" => "Pet cadastrado com sucesso"]);

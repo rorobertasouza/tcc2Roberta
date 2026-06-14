@@ -270,3 +270,40 @@
     height: 220px;
   }
 }
+
+/* ── Adoption Queue Button ── */
+.btn-enter-queue {
+  flex: 1;
+  min-width: 100px;
+  padding: 10px 12px;
+  border: 2px solid var(--brand-primary, #fe3c72);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--brand-primary, #fe3c72);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.btn-enter-queue:hover:not(:disabled) {
+  background: var(--brand-primary, #fe3c72);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(254, 60, 114, .3);
+}
+
+.btn-enter-queue:disabled {
+  opacity: 0.6;
+  cursor: default;
+  border-color: #999;
+  color: #999;
+}
+
+.match-card-actions {
+  flex-wrap: wrap;
+}

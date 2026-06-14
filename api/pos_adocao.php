@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . '/cors.php';
 include "config.php";

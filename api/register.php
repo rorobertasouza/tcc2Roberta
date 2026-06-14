@@ -21,6 +21,9 @@ $preferencia_porte = $_POST['preferencia_porte'] ?? '';
 $preferencia_idade = $_POST['preferencia_idade'] ?? '';
 $preferencia_sexo = $_POST['preferencia_sexo'] ?? '';
 $aceita_especial = $_POST['aceita_especial'] ?? '';
+$tem_pet = $_POST['tem_pet'] ?? '';
+$cidade = $_POST['cidade'] ?? '';
+$estado = $_POST['estado'] ?? '';
 
 if (!$email || !$password) {
     echo json_encode([
@@ -41,16 +44,16 @@ if ($check->num_rows > 0) {
 }
 $check->close();
 
-// 🔒 Criptografa a senha
+// Criptografa a senha
 $senhaHash = password_hash($password, PASSWORD_DEFAULT);
 
 $sql = "INSERT INTO users 
-(nome, email, senha, residencia, espaco, tempo, experiencia, preferencia_especie, preferencia_porte, preferencia_idade, preferencia_sexo, aceita_especial) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+(nome, email, senha, residencia, espaco, tempo, experiencia, preferencia_especie, preferencia_porte, preferencia_idade, preferencia_sexo, aceita_especial, tem_pet, cidade, estado) 
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param(
-    "ssssssssssss",
+    "sssssssssssssss",
     $name,
     $email,
     $senhaHash,
@@ -62,7 +65,10 @@ $stmt->bind_param(
     $preferencia_porte,
     $preferencia_idade,
     $preferencia_sexo,
-    $aceita_especial
+    $aceita_especial,
+    $tem_pet,
+    $cidade,
+    $estado
 );
 
 if ($stmt->execute()) {

@@ -53,7 +53,7 @@ export default function Auth() {
   return (
     <div className="auth-screen">
       {/* Logo */}
-      <h1 className="auth-logo">🐾 Find Animal Friend</h1>
+      <h1 className="auth-logo">Find Animal Friend</h1>
       <p className="auth-tagline">Encontre seu companheiro perfeito</p>
 
       {/* Card de login */}

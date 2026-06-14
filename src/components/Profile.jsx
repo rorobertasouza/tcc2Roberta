@@ -56,7 +56,7 @@ export default function Profile() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          showToast("Perfil atualizado! ✅", "success");
+          showToast("Perfil atualizado com sucesso!", "success");
           setIsEditing(false);
         } else {
           showToast(data.message || "Erro ao salvar", "error");
@@ -85,7 +85,7 @@ export default function Profile() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          showToast(`✅ ${data.deleted} escolha(s) resetada(s)!`, "success");
+          showToast(`${data.deleted} escolha(s) resetada(s)!`, "success");
         } else {
           showToast(data.message || "Erro ao resetar", "error");
         }
@@ -113,20 +113,20 @@ export default function Profile() {
   const initials = (profile.nome || "?").charAt(0).toUpperCase();
 
   const infoRows = [
-    { icon: "✉️",  label: "Email",             value: profile.email       },
-    { icon: "🏠",  label: "Tipo de residência", value: profile.residencia  },
-    { icon: "📐",  label: "Espaço disponível",  value: profile.espaco      },
-    { icon: "⏰",  label: "Tempo livre",         value: profile.tempo       },
-    { icon: "🐾",  label: "Experiência",         value: profile.experiencia },
+    { icon: "",  label: "Email",             value: profile.email       },
+    { icon: "",  label: "Tipo de residência", value: profile.residencia  },
+    { icon: "",  label: "Espaço disponível",  value: profile.espaco      },
+    { icon: "",  label: "Tempo livre",         value: profile.tempo       },
+    { icon: "",  label: "Experiência",         value: profile.experiencia },
   ];
 
   const prefChips = [
-    { icon: "🐕", label: profile.preferencia_especie || "Qualquer espécie" },
-    { icon: "📏", label: profile.preferencia_porte   || "Qualquer porte"   },
-    { icon: "🎂", label: profile.preferencia_idade   || "Qualquer idade"   },
-    { icon: "⚧",  label: profile.preferencia_sexo    || "Qualquer sexo"    },
+    { icon: "", label: profile.preferencia_especie || "Qualquer espécie" },
+    { icon: "", label: profile.preferencia_porte   || "Qualquer porte"   },
+    { icon: "", label: profile.preferencia_idade   || "Qualquer idade"   },
+    { icon: "",  label: profile.preferencia_sexo    || "Qualquer sexo"    },
     ...(profile.aceita_especial
-      ? [{ icon: "💙", label: `Especiais: ${profile.aceita_especial}` }]
+      ? [{ icon: "", label: `Especiais: ${profile.aceita_especial}` }]
       : []),
   ];
 
@@ -155,11 +155,11 @@ export default function Profile() {
           <h2 className="profile-name">{profile.nome || "Seu Nome"}</h2>
           {(profile.residencia || profile.espaco) && (
             <div className="profile-subtitle">
-              {profile.residencia && <span>🏠 {profile.residencia}</span>}
+              {profile.residencia && <span>{profile.residencia}</span>}
               {profile.residencia && profile.espaco && (
                 <span className="dot" />
               )}
-              {profile.espaco && <span>📐 {profile.espaco}</span>}
+              {profile.espaco && <span>{profile.espaco}</span>}
             </div>
           )}
         </div>
@@ -172,7 +172,7 @@ export default function Profile() {
               {/* Info card */}
               <div className="info-card">
                 <div className="info-card-header">
-                  <span className="icon">👤</span> Informações
+                  <span className="icon"></span> Informações
                 </div>
                 <div className="info-rows">
                   {infoRows.map((row) => (
@@ -192,7 +192,7 @@ export default function Profile() {
               {/* Preferences card */}
               <div className="info-card">
                 <div className="info-card-header">
-                  <span className="icon">🐾</span> Preferências de Pet
+                  Preferências de Pet
                 </div>
                 <div className="pref-chips">
                   {prefChips.map((c) => (
@@ -206,16 +206,16 @@ export default function Profile() {
 
               {/* Edit button */}
               <button className="edit-btn" onClick={() => setIsEditing(true)}>
-                ✏️ Editar Perfil
+                Editar Perfil
               </button>
 
               {/* Reset & Logout */}
               <div className="profile-account-actions">
                 <button className="reset-choices-btn" onClick={handleResetChoices}>
-                  🔄 Resetar Escolhas de Pets
+                  Resetar Escolhas de Pets
                 </button>
                 <button className="logout-profile-btn" onClick={handleLogout}>
-                  🚪 Sair da Conta
+                  Sair da Conta
                 </button>
               </div>
             </>
@@ -225,7 +225,7 @@ export default function Profile() {
               {/* Pessoais */}
               <div className="profile-form-wrap">
                 <div className="form-section-header">
-                  <span>👤</span> Informações Pessoais
+                  Informações Pessoais
                 </div>
                 <div className="profile-form-inner">
                   <div className="form-group">
@@ -297,11 +297,11 @@ export default function Profile() {
               {/* Preferências */}
               <div className="profile-form-wrap" style={{ marginTop: "12px" }}>
                 <div className="form-section-header">
-                  <span>🐾</span> Preferências de Pet
+                  Preferências de Pet
                 </div>
                 <div className="profile-form-inner">
                   <p className="pref-hint">
-                    💡 Essas preferências definem quais pets aparecem nos cards para você.
+                    Essas preferências definem quais pets aparecem nos cards para você.
                   </p>
 
                   <div className="form-row">
@@ -370,7 +370,7 @@ export default function Profile() {
 
                 <div className="form-actions">
                   <button type="submit" className="save-btn" disabled={saving}>
-                    {saving ? "Salvando..." : "💾 Salvar"}
+                    {saving ? "Salvando..." : "Salvar"}
                   </button>
                   <button type="button" className="cancel-btn" onClick={handleCancel}>
                     Cancelar
