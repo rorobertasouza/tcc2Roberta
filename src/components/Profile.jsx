@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "./AppShell.jsx";
 import { API_BASE } from "../config.js";
+import { useAuth } from "../context/AuthContext.tsx";
 import "./Profile.css";
 
 export default function Profile() {
+  const { logoutUser } = useAuth();
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const navigate = useNavigate();
 
@@ -70,7 +72,7 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    logoutUser();
     navigate("/");
   };
 

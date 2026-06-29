@@ -13,9 +13,9 @@ async function getPets(userId) {
   return await res.json();
 }
 
-// Broadcast tipado para todos os clientes
+// NOTA PRO TCC: Broadcast tipado para atualizar os pets nos clientes conectados
 async function broadcastPetsUpdate() {
-  console.log(`Transmitindo atualizacao para ${clients.size} cliente(s)...`);
+  console.log(`Atualizando ${clients.size} cliente(s)...`);
   for (const client of clients) {
     if (client.readyState === WebSocket.OPEN) {
       try {
@@ -25,15 +25,15 @@ async function broadcastPetsUpdate() {
           pets: pets
         }));
       } catch (err) {
-        console.error(`Erro ao atualizar cliente ${client.userId}:`, err);
+        console.error(`Erro no cliente ${client.userId}:`, err);
       }
     }
   }
 }
 
-// Broadcast específico de adoção para todos (tempo real)
+// NOTA PRO TCC: Evento em tempo real para adoção imediata
 function broadcastAdoption(petId) {
-  console.log(`Broadcast: pet ${petId} foi adotado!`);
+  console.log(`Broadcast: pet ${petId} adotado`);
   const message = JSON.stringify({
     type: "pet_adopted",
     pet_id: petId,
@@ -47,16 +47,15 @@ function broadcastAdoption(petId) {
   }
 }
 
-// Broadcast de toggle favorito
+// NOTA PRO TCC: Notifica atualização de favoritos especificamente para o próprio usuário (unicast)
 function broadcastFavoriteUpdate(userId, petId, action) {
   const message = JSON.stringify({
     type: "favorite_update",
     user_id: userId,
     pet_id: petId,
-    action: action // "added" ou "removed"
+    action: action
   });
 
-  // Enviar apenas para o próprio usuário
   for (const client of clients) {
     if (client.readyState === WebSocket.OPEN && String(client.userId) === String(userId)) {
       client.send(message);
@@ -73,7 +72,7 @@ wss.on('connection', async (ws, req) => {
   ws.userId = userId;
   clients.add(ws);
 
-  // Envia lista inicial com tipo
+  // Carrega pets no primeiro login
   try {
     const pets = await getPets(userId);
     ws.send(JSON.stringify({
@@ -81,10 +80,10 @@ wss.on('connection', async (ws, req) => {
       pets: pets
     }));
   } catch (err) {
-    console.error("Erro ao buscar lista inicial de pets:", err);
+    console.error("Erro carga inicial pets:", err);
   }
 
-  // Atualiza a cada 15s (passiva)
+  // NOTA PRO TCC: Polling passivo de 15 segundos para garantir que o cliente não fique desatualizado caso o WebSocket perca eventos
   const interval = setInterval(async () => {
     if (ws.readyState === WebSocket.OPEN) {
       try {
@@ -94,19 +93,18 @@ wss.on('connection', async (ws, req) => {
           pets: pets
         }));
       } catch (err) {
-        console.error("Erro no intervalo de atualizacao passiva:", err);
+        console.error("Erro no polling passivo:", err);
       }
     }
   }, 15000);
 
-  // Tratar mensagens recebidas do cliente
+  // Escuta mensagens enviadas pelos clientes
   ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message);
       
-      // ── Adotar pet ──
       if (data.action === 'adopt' && data.pet_id) {
-        console.log(`Recebido 'adopt' para pet_id: ${data.pet_id} de user_id: ${data.user_id || 'desconhecido'}`);
+        console.log(`Ação: adopt pet_id: ${data.pet_id}`);
         
         const response = await fetch('http://localhost/find-animal-friend-react/api/adotar.php', {
           method: 'POST',
@@ -119,19 +117,15 @@ wss.on('connection', async (ws, req) => {
         const resData = await response.json();
         
         if (resData.success) {
-          console.log(`Pet ${data.pet_id} adotado. Broadcast imediato...`);
-          // Primeiro: broadcast imediato da adoção (tempo real)
           broadcastAdoption(data.pet_id);
-          // Depois: atualização completa da lista
           await broadcastPetsUpdate();
         } else {
-          console.error("Erro na API de adocao:", resData.message);
+          console.error("Erro ao adotar via API:", resData.message);
         }
       }
 
-      // ── Toggle favorito ──
       if (data.action === 'toggle_favorite' && data.pet_id && data.user_id) {
-        console.log(`Toggle favorito: pet_id=${data.pet_id}, user_id=${data.user_id}`);
+        console.log(`Ação: toggle_favorite pet_id=${data.pet_id}`);
         
         const response = await fetch('http://localhost/find-animal-friend-react/api/favoritos.php', {
           method: 'POST',
@@ -148,12 +142,13 @@ wss.on('connection', async (ws, req) => {
         }
       }
     } catch (err) {
-      console.error("Erro ao tratar mensagem do WebSocket:", err);
+      console.error("Erro no processamento de mensagem WS:", err);
     }
   });
 
+  // NOTA PRO TCC: Cleanup do cliente na desconexão (deleta do set e limpa interval para evitar memory leaks)
   ws.on('close', () => {
-    console.log("Conexão fechada");
+    console.log("Conexão encerrada");
     clients.delete(ws);
     clearInterval(interval);
   });

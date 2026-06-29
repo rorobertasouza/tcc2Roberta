@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config.js";
+import { useAuth } from "../context/AuthContext.tsx";
 import "./CadastroPet.css";
 import "../styles.css";
 
 export default function CadastroPet() {
+  const { logoutOng } = useAuth();
   const navigate = useNavigate();
   const [ong, setOng] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -207,7 +209,7 @@ export default function CadastroPet() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("ong");
+    logoutOng();
     navigate("/ong-login");
   };
 

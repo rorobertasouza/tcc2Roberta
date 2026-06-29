@@ -3,9 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import Register from "./Register.jsx";
 import ForgotPassword from "./ForgotPassword.jsx";
 import { API_BASE } from "../config.js";
+import { useAuth } from "../context/AuthContext.tsx";
 import "../styles.css";
 
 export default function Auth() {
+  const { loginUser } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -32,7 +34,7 @@ export default function Auth() {
       .then((text) => {
         const data = JSON.parse(text);
         if (data.success) {
-          localStorage.setItem("user", JSON.stringify(data.user));
+          loginUser(data.user);
           navigate("/home");
         } else {
           setError(data.message || data.erro || "Email ou senha inválidos");

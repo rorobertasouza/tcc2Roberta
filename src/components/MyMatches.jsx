@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AppShell from "./AppShell.jsx";
-import { API_BASE } from "../config.js";
+import { API_BASE, WS_URL } from "../config.js";
 import "./MyMatches.css";
 
 export default function MyMatches() {
@@ -13,6 +13,7 @@ export default function MyMatches() {
   const [queueingId, setQueueingId] = useState(null);
   const [toast, setToast] = useState(null);
 
+  // NOTA PRO TCC: Busca inicial dos matches do usuário via API REST
   useEffect(() => {
     const url = userId
       ? `${API_BASE}/matches.php?user_id=${userId}`
@@ -39,6 +40,7 @@ export default function MyMatches() {
     setTimeout(() => setToast(null), 3500);
   };
 
+  // NOTA PRO TCC: Processa a ação de adoção do pet
   const handleAdopt = (pet) => {
     if (adoptingId) return;
     setAdoptingId(pet.id);
@@ -59,18 +61,21 @@ export default function MyMatches() {
           );
           showToast(`${pet.nome} foi adotado com sucesso!`);
 
-          try {
-            const ws = new WebSocket(`ws://localhost:3002?user_id=${userId}`);
-            ws.onopen = () => {
-              ws.send(JSON.stringify({
-                action: "adopt",
-                pet_id: pet.id,
-                user_id: userId,
-              }));
-              setTimeout(() => ws.close(), 1000);
-            };
-          } catch (e) {
-            // WebSocket não disponível — fallback já foi feito via REST
+          // NOTA PRO TCC: WebSocket temporário para propagar o status de adotado em tempo real para os demais usuários conectados
+          if (WS_URL) {
+            try {
+              const ws = new WebSocket(`${WS_URL}?user_id=${userId}`);
+              ws.onopen = () => {
+                ws.send(JSON.stringify({
+                  action: "adopt",
+                  pet_id: pet.id,
+                  user_id: userId,
+                }));
+                setTimeout(() => ws.close(), 1000);
+              };
+            } catch (e) {
+              // Conexão falhou, mas a persistência no banco via HTTP REST foi concluída
+            }
           }
         } else {
           showToast(data.message || "Erro ao confirmar adoção", "error");
@@ -83,6 +88,7 @@ export default function MyMatches() {
       });
   };
 
+  // NOTA PRO TCC: Gerenciamento da fila de interesse caso o pet já tenha recebido atenção
   const handleEnterQueue = (pet) => {
     if (queueingId) return;
     setQueueingId(pet.id);
@@ -136,7 +142,6 @@ export default function MyMatches() {
       )}
 
       <div className="matches-page">
-        {/* Contador */}
         <div className="matches-hero">
           <p className="matches-count">
             {matches.length > 0
@@ -165,6 +170,7 @@ export default function MyMatches() {
                   style={{ animationDelay: `${index * 0.07}s` }}
                 >
                   <div className="match-card-image-wrap">
+                    {/* NOTA PRO TCC: Tratamento de imagem com fallback SVG para links corrompidos */}
                     <img
                       className="match-card-image"
                       src={pet.foto}

@@ -38,17 +38,17 @@ export default function useWebSocket(userId?: string | number | null) {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<number | null>(null);
 
-  // Enviar ação de adotar com atualização otimista e fallback HTTP
+  // NOTA PRO TCC: Adoção com Optimistic UI (atualiza estado local antes da resposta do servidor para interface fluida)
   const adoptPet = useCallback((petId: string | number, adoptUserId?: string | number) => {
     const numId = Number(petId);
     const targetUserId = adoptUserId || userId;
 
-    // Atualização Otimista local
     setPets(prev => prev.map(p =>
       Number(p.id) === numId ? { ...p, adotado: 1 } : p
     ));
     setAdoptedPetIds(prev => new Set(prev).add(numId));
 
+    // NOTA PRO TCC: Arquitetura híbrida. Se o WebSocket estiver offline, envia a requisição HTTP (fallback)
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({
         action: "adopt",
@@ -56,7 +56,7 @@ export default function useWebSocket(userId?: string | number | null) {
         user_id: targetUserId
       }));
     } else {
-      console.warn("WebSocket não está aberto para adoção. Enviando via REST API.");
+      console.warn("WS desconectado. Enviando via REST.");
       fetch(`${API_BASE}/adotar.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,11 +66,10 @@ export default function useWebSocket(userId?: string | number | null) {
     }
   }, [userId]);
 
-  // Enviar ação de toggle favorito com atualização otimista e fallback HTTP
+  // NOTA PRO TCC: Toggle de favorito com Optimistic UI e fallback HTTP REST
   const toggleFavorite = useCallback((petId: string | number) => {
     const numId = Number(petId);
 
-    // Atualização Otimista local
     setPets(prev => prev.map(p =>
       Number(p.id) === numId ? { ...p, favorito: p.favorito === 1 ? 0 : 1 } : p
     ));
@@ -91,7 +90,7 @@ export default function useWebSocket(userId?: string | number | null) {
         user_id: userId
       }));
     } else {
-      console.warn("WebSocket não está aberto para favoritar. Enviando via REST API.");
+      console.warn("WS desconectado. Enviando favorito via REST.");
       fetch(`${API_BASE}/favoritos.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,10 +100,10 @@ export default function useWebSocket(userId?: string | number | null) {
     }
   }, [userId]);
 
+  // NOTA PRO TCC: Conexão e Gerenciamento do WebSocket (com lógica de reconexão e cleanup de listeners)
   useEffect(() => {
-    // Se WS_URL for null (ex: Ngrok), não conecta WebSocket — usa fallback HTTP
     if (!WS_URL) {
-      console.log("WebSocket desabilitado neste ambiente. Usando fallback HTTP.");
+      console.log("WS desabilitado. Usando modo HTTP.");
       return;
     }
 
@@ -117,13 +116,12 @@ export default function useWebSocket(userId?: string | number | null) {
       socketRef.current = socket;
 
       socket.onopen = () => {
-        console.log("Conectado ao WebSocket", socketUrl);
+        console.log("WS conectado:", socketUrl);
       };
 
       socket.onmessage = (event) => {
         try {
           const data: WSMessage = JSON.parse(event.data);
-          console.log("WS mensagem recebida:", data.type);
 
           switch (data.type) {
             case "pets_update":
@@ -135,7 +133,7 @@ export default function useWebSocket(userId?: string | number | null) {
                   favorito: Number(p.favorito)
                 }));
                 setPets(castedPets);
-                // Atualizar sets
+                
                 const adopted = new Set<number>();
                 const favorited = new Set<number>();
                 castedPets.forEach((p: Pet) => {
@@ -150,12 +148,11 @@ export default function useWebSocket(userId?: string | number | null) {
             case "pet_adopted":
               if (data.pet_id) {
                 const adoptedId = Number(data.pet_id);
-                // Atualizar imediatamente o pet na lista local
                 setPets(prev => prev.map(p =>
                   Number(p.id) === adoptedId ? { ...p, adotado: 1 } : p
                 ));
                 setAdoptedPetIds(prev => new Set(prev).add(adoptedId));
-                console.log(`🏠 Pet ${adoptedId} marcado como adotado em tempo real!`);
+                console.log(`Pet ${adoptedId} atualizado via WS`);
               }
               break;
 
@@ -175,7 +172,6 @@ export default function useWebSocket(userId?: string | number | null) {
               break;
 
             default:
-              // Formato legado (array direto)
               if (Array.isArray(data)) {
                 setPets(data as unknown as Pet[]);
               } else if ((data as any)?.pets) {
@@ -183,25 +179,26 @@ export default function useWebSocket(userId?: string | number | null) {
               }
           }
         } catch (err) {
-          console.error("Erro ao parsear mensagem WS:", err);
+          console.error("Erro no processamento WS:", err);
         }
       };
 
+      // NOTA PRO TCC: Reconexão automática em 3 segundos se a conexão cair involuntariamente
       socket.onclose = () => {
         if (!shouldReconnect) return;
-        console.log("Conexão WebSocket fechada, reconectando em 3s...");
+        console.log("WS fechado. Tentando reconectar...");
         reconnectTimeout.current = window.setTimeout(connectWebSocket, 3000);
       };
 
       socket.onerror = (err) => {
         if (shouldReconnect) {
-          console.error("Erro WebSocket:", err);
+          console.error("Erro detectado no WS:", err);
         }
         if (socket.readyState !== WebSocket.CLOSED) {
           try {
             socket.close();
           } catch (e) {
-            console.warn("Erro ao fechar WebSocket após erro:", e);
+            console.warn("Erro ao finalizar socket:", e);
           }
         }
       };
@@ -209,6 +206,7 @@ export default function useWebSocket(userId?: string | number | null) {
 
     connectWebSocket();
 
+    // NOTA PRO TCC: Cleanup do useEffect (desliga reconexão e fecha socket para não vazar memória ao desempilhar componente)
     return () => {
       shouldReconnect = false;
       if (reconnectTimeout.current) {

@@ -3,6 +3,7 @@ import SwipeCard from "./SwipeCard";
 import MatchScreen from "./MatchScreen";
 import useWebSocket from "../hooks/useWebSocket";
 import useGeolocation from "../hooks/useGeolocation";
+import { useAuth } from "../context/AuthContext.tsx";
 import "./PetApp.css";
 import "./SwipeCard.css";
 import { API_BASE } from "../config.js";
@@ -88,6 +89,7 @@ function ListCard({ pet, onLike, onFavorite, isFavorited }) {
 }
 
 export default function PetApp() {
+  const { logoutUser } = useAuth();
   const storedUser = JSON.parse(localStorage.getItem("user") || "null");
   const userId = storedUser?.id;
   const { pets: wsPets, adoptPet, toggleFavorite, favoritePetIds } = useWebSocket(userId);
@@ -203,7 +205,7 @@ export default function PetApp() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    logoutUser();
     navigate("/");
   };
 

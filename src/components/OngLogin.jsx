@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import ForgotPassword from "./ForgotPassword.jsx";
 import { API_BASE } from "../config.js";
+import { useAuth } from "../context/AuthContext.tsx";
 import "../styles.css";
 
 export default function OngLogin() {
+  const { loginOng } = useAuth();
   const [form, setForm]     = useState({ email: "", senha: "" });
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function OngLogin() {
       });
       const data = await res.json();
       if (data.success) {
-        localStorage.setItem("ong", JSON.stringify(data.ong));
+        loginOng(data.ong);
         navigate("/dashboard");
       } else {
         setErro(data.message || "Email ou senha inválidos.");
